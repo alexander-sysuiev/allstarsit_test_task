@@ -1,25 +1,32 @@
 import cors from 'cors';
 import express from 'express';
 import { TICK_MS } from './config/constants.js';
-import { createInitialUnits } from './domain/createInitialUnits.js';
+import { createInitialSnapshot } from './domain/createInitialUnits.js';
 import { UnitSimulationService } from './services/unitSimulationService.js';
 import { SseBroadcaster } from './transport/sseBroadcaster.js';
 
 export const createApp = () => {
   const app = express();
-  // TODO: Replace naive random updates with deterministic, testable simulation rules.
-  const simulation = new UnitSimulationService(createInitialUnits());
+  const initialSnapshot = createInitialSnapshot();
+  const simulation = new UnitSimulationService(initialSnapshot.units);
   const broadcaster = new SseBroadcaster();
 
   app.use(cors());
   app.use(express.json());
 
   app.get('/health', (_req, res) => {
-    res.json({ ok: true, clients: broadcaster.count() });
+    res.json({ ok: true, clients: broadcaster.count(), units: initialSnapshot.units.length });
   });
 
   app.get('/api/units', (_req, res) => {
-    res.json({ units: simulation.getSnapshot() });
+    const units = simulation.getSnapshot();
+    res.json({
+      snapshot: {
+        tick: 0,
+        units,
+        kpis: initialSnapshot.kpis
+      }
+    });
   });
 
   app.get('/api/stream', (_req, res) => {
@@ -29,7 +36,6 @@ export const createApp = () => {
     res.flushHeaders();
 
     broadcaster.addClient(res);
-
     res.write(`event: ready\ndata: ${JSON.stringify({ connected: true })}\n\n`);
 
     const heartbeat = setInterval(() => {
@@ -44,10 +50,10 @@ export const createApp = () => {
   });
 
   setInterval(() => {
-    const updates = simulation.tick();
+    const delta = simulation.tick();
 
-    if (updates.length > 0) {
-      broadcaster.send('units.delta', { updates, ts: Date.now() });
+    if (delta.patches.length > 0) {
+      broadcaster.send('units.delta', delta);
     }
   }, TICK_MS);
 
