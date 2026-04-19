@@ -7,6 +7,7 @@ import {
 import { randomAttack, randomHealing, randomIdle, randomMovement, type SimpleActionResult } from '../domain/actions.js';
 import { computeBattlefieldKpis } from '../domain/kpis.js';
 import type {
+  BattlefieldKpis,
   BattleEvent,
   TickDelta,
   Unit,
@@ -21,6 +22,7 @@ export class UnitSimulationService {
   private readonly unitsById = new Map<string, Unit>();
   private readonly unitIds: string[];
   private tickNumber = 0;
+  private currentKpis: BattlefieldKpis;
   private previousZoneControl: Record<Zone, ZoneControl>;
 
   constructor(initialUnits: Unit[]) {
@@ -28,13 +30,22 @@ export class UnitSimulationService {
       this.unitsById.set(unit.id, unit);
     }
     this.unitIds = initialUnits.map((unit) => unit.id);
-    this.previousZoneControl = computeBattlefieldKpis(initialUnits).zoneControl;
+    this.currentKpis = computeBattlefieldKpis(initialUnits);
+    this.previousZoneControl = this.currentKpis.zoneControl;
   }
 
   getSnapshot(): Unit[] {
     return this.unitIds
       .map((id) => this.unitsById.get(id))
       .filter((unit): unit is Unit => unit !== undefined);
+  }
+
+  getTickNumber(): number {
+    return this.tickNumber;
+  }
+
+  getKpis(): BattlefieldKpis {
+    return this.currentKpis;
   }
 
   tick(): TickDelta {
@@ -94,6 +105,7 @@ export class UnitSimulationService {
 
     events.push(...this.buildCaptureEvents(kpis.zoneControl, serverTime));
     this.previousZoneControl = kpis.zoneControl;
+    this.currentKpis = kpis;
 
     return {
       tickNumber: this.tickNumber,
