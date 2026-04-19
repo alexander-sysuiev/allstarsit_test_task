@@ -19,11 +19,10 @@ export const createApp = () => {
   });
 
   app.get('/api/units', (_req, res) => {
-    const units = simulation.getSnapshot();
     res.json({
       snapshot: {
-        tick: 0,
-        units,
+        tickNumber: 0,
+        units: simulation.getSnapshot(),
         kpis: initialSnapshot.kpis
       }
     });
@@ -50,10 +49,10 @@ export const createApp = () => {
   });
 
   setInterval(() => {
-    const delta = simulation.tick();
+    const tick = simulation.tick();
 
-    if (delta.patches.length > 0) {
-      broadcaster.send('units.delta', delta);
+    if (tick.changedUnits.length > 0 || tick.events.length > 0) {
+      broadcaster.send('units.delta', tick);
     }
   }, TICK_MS);
 

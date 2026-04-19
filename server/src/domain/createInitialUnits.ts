@@ -47,8 +47,8 @@ export const createInitialSnapshot = (): InitialSnapshot => {
   const units = createInitialUnits();
 
   return {
-    tick: 0,
+    tickNumber: 0,
     units,
-    kpis: computeBattlefieldKpis(units, 0)
+    kpis: computeBattlefieldKpis(units)
   };
 };

@@ -17,34 +17,25 @@ export interface Unit {
   version: number;
 }
 
-export type BattleEventType = 'move' | 'attack' | 'heal' | 'idle' | 'death' | 'zone-change';
+export type BattleEventType = 'move' | 'attack' | 'heal' | 'idle' | 'destroy' | 'capture';
 
 export interface BattleEvent {
   id: string;
-  tick: number;
-  at: number;
+  tickNumber: number;
+  serverTime: number;
   type: BattleEventType;
-  unitId: string;
-  team: Team;
   zone: Zone;
   details: string;
-}
-
-export interface TeamKpis {
-  total: number;
-  alive: number;
-  avgHealth: number;
+  unitId?: string;
+  targetId?: string;
+  team?: Team;
 }
 
 export type ZoneControl = Team | 'contested' | 'neutral';
 
 export interface BattlefieldKpis {
-  tick: number;
-  totalUnits: number;
-  aliveUnits: number;
-  deadUnits: number;
-  red: TeamKpis;
-  blue: TeamKpis;
+  unitsAlive: number;
+  destroyedCount: number;
   zoneControl: Record<Zone, ZoneControl>;
 }
 
@@ -55,15 +46,15 @@ export interface UnitPatch {
 }
 
 export interface TickDelta {
-  tick: number;
-  at: number;
-  patches: UnitPatch[];
+  tickNumber: number;
+  serverTime: number;
+  changedUnits: UnitPatch[];
   events: BattleEvent[];
   kpis: BattlefieldKpis;
 }
 
 export interface InitialSnapshot {
-  tick: number;
+  tickNumber: number;
   units: Unit[];
   kpis: BattlefieldKpis;
 }
