@@ -1,36 +1,59 @@
-import { useEffect, useRef } from 'react';
-import type { Unit } from '../../entities/units/types';
+import { memo, useEffect, useRef } from 'react';
+import { unitsSelectors, selectLastAppliedTick } from '../../entities/units/store';
+import { store } from '../../store';
+import { TacticalMapRenderer } from './tacticalMapRenderer';
 
-interface MapCanvasProps {
-  units: Unit[];
-  width: number;
-  height: number;
-}
-
-export const MapCanvas = ({ units, width, height }: MapCanvasProps): JSX.Element => {
+const MapCanvasComponent = (): JSX.Element => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) {
+    const container = containerRef.current;
+    if (!canvas || !container) {
       return;
     }
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      return;
-    }
+    // Canvas keeps 20k units on a single surface. A DOM/SVG approach would
+    // create and update thousands of nodes every tick, which is a worse fit here.
+    const renderer = new TacticalMapRenderer(canvas);
 
-    ctx.clearRect(0, 0, width, height);
+    const syncRenderer = (): void => {
+      const state = store.getState();
 
-    for (const unit of units) {
-      ctx.fillStyle = unit.team === 'red' ? '#d94848' : '#3b82f6';
-      ctx.globalAlpha = unit.alive ? 0.95 : 0.25;
-      ctx.fillRect((unit.x / 2000) * width, (unit.y / 2000) * height, 2, 2);
-    }
+      renderer.setScene({
+        units: unitsSelectors.selectAll(state),
+        filters: state.filters,
+        tickNumber: selectLastAppliedTick(state)
+      });
+    };
 
-    ctx.globalAlpha = 1;
-  }, [units, width, height]);
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) {
+        return;
+      }
 
-  return <canvas ref={canvasRef} width={width} height={height} className="map-canvas" />;
+      renderer.resize(entry.contentRect.width, entry.contentRect.height);
+    });
+
+    resizeObserver.observe(container);
+    syncRenderer();
+
+    const unsubscribe = store.subscribe(syncRenderer);
+
+    return () => {
+      unsubscribe();
+      resizeObserver.disconnect();
+      renderer.destroy();
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="map-canvas-shell">
+      <canvas ref={canvasRef} className="map-canvas" />
+    </div>
+  );
 };
+
+export const MapCanvas = memo(MapCanvasComponent);

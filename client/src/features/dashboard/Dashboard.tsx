@@ -56,7 +56,7 @@ export const Dashboard = (): JSX.Element => {
 
       <section className="panel map">
         <h2>Map</h2>
-        <MapCanvas units={filteredUnits} width={900} height={450} />
+        <MapCanvas />
       </section>
 
       <section className="panel list">
