@@ -1,22 +1,18 @@
+import { EventFeed } from '../events/EventFeed';
+import { KpiCards } from '../kpis/KpiCards';
 import { MapCanvas } from '../map/MapCanvas';
 import { UnitList } from '../unit-list/UnitList';
 import { useAppSelector } from '../../store/hooks';
 
 export const Dashboard = (): JSX.Element => {
   const filters = useAppSelector((state) => state.filters);
-  const events = useAppSelector((state) => state.eventsFeed.items);
-  const kpis = useAppSelector((state) => state.kpis);
   const performance = useAppSelector((state) => state.performance);
-  const connection = useAppSelector((state) => state.connection);
 
   return (
     <main className="layout">
-      <section className="panel metrics">
+      <section className="layout-full">
         <h1>Battle Dashboard</h1>
-        <p>Connection: {connection.phase}</p>
-        <p>Tick: {kpis.tickNumber}</p>
-        <p>Alive: {kpis.data?.unitsAlive ?? 0}</p>
-        <p>Destroyed: {kpis.data?.destroyedCount ?? 0}</p>
+        <KpiCards />
       </section>
 
       <section className="panel metrics">
@@ -48,16 +44,7 @@ export const Dashboard = (): JSX.Element => {
 
       <section className="panel list">
         <h2>Events Feed</h2>
-        <div className="unit-list-scroll">
-          {events.slice(0, 60).map((event) => (
-            <div key={event.id} className="unit-row event-row-grid">
-              <span>#{event.tickNumber}</span>
-              <span>{event.type}</span>
-              <span>{event.zone}</span>
-              <span>{event.details}</span>
-            </div>
-          ))}
-        </div>
+        <EventFeed />
       </section>
     </main>
   );

@@ -24,9 +24,18 @@ body {
     grid-template-columns: 1fr 2fr;
   }
 
+  .layout-full {
+    grid-column: 1 / span 2;
+  }
+
   .list {
     grid-column: 1 / span 2;
   }
+}
+
+.layout-full {
+  display: grid;
+  gap: 16px;
 }
 
 .panel {
@@ -34,6 +43,81 @@ body {
   border-radius: 12px;
   padding: 12px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.kpi-card {
+  display: grid;
+  gap: 8px;
+}
+
+.kpi-card-wide {
+  grid-column: span 2;
+}
+
+.kpi-label {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5d6b88;
+}
+
+.kpi-value {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  color: #0f1b33;
+}
+
+.kpi-meta {
+  margin: 0;
+  font-size: 13px;
+  color: #5d6b88;
+}
+
+.zone-control-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.zone-chip {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #d7def0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f8fbff;
+  font-size: 12px;
+  color: #40506f;
+}
+
+.zone-chip strong {
+  font-size: 14px;
+  text-transform: capitalize;
+  color: #0f1b33;
+}
+
+.zone-red {
+  border-color: #f1c5c5;
+  background: #fff5f5;
+}
+
+.zone-blue {
+  border-color: #c9dafb;
+  background: #f4f8ff;
+}
+
+.zone-contested {
+  border-color: #ead8a5;
+  background: #fffbee;
 }
 
 .map-canvas-shell {
@@ -118,6 +202,41 @@ body {
 .event-row-grid {
   display: grid;
   grid-template-columns: 0.6fr 0.8fr 1fr 2fr;
+}
+
+.event-feed {
+  display: grid;
+  gap: 10px;
+}
+
+.event-feed-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: #5d6b88;
+}
+
+.empty-state {
+  padding: 16px;
+  font-size: 13px;
+  color: #5d6b88;
+}
+
+.event-attack {
+  background: #fffaf2;
+}
+
+.event-destroy {
+  background: #fff5f5;
+}
+
+.event-capture {
+  background: #f5fbff;
+}
+
+.event-heal {
+  background: #f3fcf6;
 }
 
 .unit-name {
