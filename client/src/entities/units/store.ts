@@ -21,25 +21,17 @@ const unitsSlice = createSlice({
       state.lastAppliedTick = action.payload.tickNumber;
     },
     applyUnitPatches: (state, action: PayloadAction<{ patches: UnitPatch[]; tickNumber: number }>) => {
+      // Apply only incoming field-level changes to existing entities.
+      // This avoids rebuilding full 20k unit objects on each tick.
       const updates = action.payload.patches
-        .map((patch) => {
-          const existing = state.entities[patch.id];
-          if (!existing) {
-            return null;
-          }
-
-          const merged: Unit = {
-            ...existing,
+        .filter((patch) => state.entities[patch.id] !== undefined)
+        .map((patch) => ({
+          id: patch.id,
+          changes: {
             ...patch.changes,
             version: patch.version
-          };
-
-          return {
-            id: patch.id,
-            changes: merged
-          };
-        })
-        .filter((update): update is { id: string; changes: Unit } => update !== null);
+          } as Partial<Unit>
+        }));
 
       unitsAdapter.updateMany(state, updates);
       state.lastAppliedTick = Math.max(state.lastAppliedTick, action.payload.tickNumber);

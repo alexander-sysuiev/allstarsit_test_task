@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { BattleEvent } from '../../entities/units/types';
 
-const MAX_EVENTS = 500;
+const MAX_EVENTS = 200;
 
 export interface EventsFeedState {
   items: BattleEvent[];
@@ -16,6 +16,7 @@ const eventsFeedSlice = createSlice({
   initialState,
   reducers: {
     appendEvents: (state, action: PayloadAction<BattleEvent[]>) => {
+      // Keep a bounded feed to cap memory and render cost over long sessions.
       state.items.unshift(...action.payload);
       if (state.items.length > MAX_EVENTS) {
         state.items.length = MAX_EVENTS;

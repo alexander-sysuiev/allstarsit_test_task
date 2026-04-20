@@ -6,6 +6,7 @@ import { setKpisFromDelta } from '../slices/kpisSlice';
 import { recordTickMetrics } from '../slices/performanceSlice';
 
 export const applyTickDeltaToStore = (dispatch: AppDispatch, delta: TickDelta): void => {
+  // Tick payloads carry only changed units; reducer applies field-level patches in place.
   dispatch(
     applyUnitPatches({
       patches: delta.changedUnits,

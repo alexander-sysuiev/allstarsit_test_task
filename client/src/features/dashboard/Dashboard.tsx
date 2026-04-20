@@ -47,6 +47,8 @@ export const Dashboard = (): JSX.Element => {
       <section className="panel metrics">
         <h2>Performance</h2>
         <p>Ticks received: {performance.ticksReceived}</p>
+        <p>Update rate: {performance.updatesPerSecond.toFixed(2)} /s</p>
+        <p>Avg update rate: {performance.averageUpdatesPerSecond.toFixed(2)} /s</p>
         <p>Latency: {performance.lastLatencyMs} ms</p>
         <p>Avg patches/tick: {performance.averagePatchesPerTick.toFixed(1)}</p>
         <p>Max patches/tick: {performance.maxPatchesInTick}</p>
