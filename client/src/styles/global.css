@@ -51,6 +51,48 @@ body {
   background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
 }
 
+.unit-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.unit-panel-controls {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.unit-panel-field {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: #40506f;
+}
+
+.unit-panel-field input,
+.unit-panel-field select {
+  width: 100%;
+  border: 1px solid #cfd9ee;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  background: #fbfcff;
+  color: #0b1321;
+}
+
+.unit-panel-summary {
+  font-size: 12px;
+  color: #5d6b88;
+}
+
+.unit-list-head {
+  padding: 0 10px 8px;
+  border-bottom: 1px solid #dfe6f5;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: #5d6b88;
+}
+
 .unit-list-scroll {
   height: 420px;
   overflow: auto;
@@ -59,12 +101,27 @@ body {
 }
 
 .unit-row {
-  display: grid;
-  grid-template-columns: 1.5fr 0.5fr 0.5fr 0.7fr;
   align-items: center;
   gap: 8px;
   padding: 0 10px;
   border-bottom: 1px solid #edf1fb;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 12px;
+  min-height: 44px;
+}
+
+.unit-row-grid {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.4fr) 0.6fr 0.9fr 0.5fr minmax(180px, 1.2fr);
+}
+
+.event-row-grid {
+  display: grid;
+  grid-template-columns: 0.6fr 0.8fr 1fr 2fr;
+}
+
+.unit-name {
+  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  font-weight: 600;
+  color: #0f1b33;
 }
