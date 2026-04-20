@@ -3,30 +3,9 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { unitsSelectors } from '../../entities/units/store';
 import type { Unit, UnitStatus } from '../../entities/units/types';
 import { useAppSelector } from '../../store/hooks';
+import { filterUnitsForList, normalizeHealthRange } from './unitListFilters';
 
 const STATUS_OPTIONS: Array<UnitStatus | 'all'> = ['all', 'idle', 'moving', 'attacking', 'healing', 'dead'];
-
-const matchesUnitFilters = (
-  unit: Unit,
-  query: string,
-  status: UnitStatus | 'all',
-  minHealth: number,
-  maxHealth: number
-): boolean => {
-  if (query.length > 0 && !unit.name.toLowerCase().includes(query)) {
-    return false;
-  }
-
-  if (status !== 'all' && unit.status !== status) {
-    return false;
-  }
-
-  if (unit.health < minHealth || unit.health > maxHealth) {
-    return false;
-  }
-
-  return true;
-};
 
 const UnitRow = memo(({ unit }: { unit: Unit }): JSX.Element => {
   return (
@@ -54,29 +33,20 @@ export const UnitList = (): JSX.Element => {
 
   const deferredSearch = useDeferredValue(search);
   const normalizedQuery = deferredSearch.trim().toLowerCase();
-  const normalizedMinHealth = Math.max(0, Number(minHealth) || 0);
-  const normalizedMaxHealth = Math.max(normalizedMinHealth, Number(maxHealth) || 0);
+  const { minHealth: normalizedMinHealth, maxHealth: normalizedMaxHealth } = normalizeHealthRange(
+    minHealth,
+    maxHealth
+  );
 
   const filteredUnits = useMemo(() => {
-    return units.filter((unit) => {
-      if (battlefieldFilters.team !== 'all' && unit.team !== battlefieldFilters.team) {
-        return false;
-      }
-
-      if (battlefieldFilters.zone !== 'all' && unit.zone !== battlefieldFilters.zone) {
-        return false;
-      }
-
-      if (!battlefieldFilters.includeDestroyed && !unit.alive) {
-        return false;
-      }
-
-      return matchesUnitFilters(unit, normalizedQuery, status, normalizedMinHealth, normalizedMaxHealth);
+    return filterUnitsForList(units, battlefieldFilters, {
+      query: normalizedQuery,
+      status,
+      minHealth: normalizedMinHealth,
+      maxHealth: normalizedMaxHealth
     });
   }, [
-    battlefieldFilters.includeDestroyed,
-    battlefieldFilters.team,
-    battlefieldFilters.zone,
+    battlefieldFilters,
     normalizedMaxHealth,
     normalizedMinHealth,
     normalizedQuery,

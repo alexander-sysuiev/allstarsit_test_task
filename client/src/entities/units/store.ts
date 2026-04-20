@@ -1,5 +1,6 @@
 import { createEntityAdapter, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../../store';
+import { buildUnitPatchUpdates } from './patches';
 import type { Unit, UnitPatch } from './types';
 
 const unitsAdapter = createEntityAdapter<Unit>();
@@ -23,15 +24,7 @@ const unitsSlice = createSlice({
     applyUnitPatches: (state, action: PayloadAction<{ patches: UnitPatch[]; tickNumber: number }>) => {
       // Apply only incoming field-level changes to existing entities.
       // This avoids rebuilding full 20k unit objects on each tick.
-      const updates = action.payload.patches
-        .filter((patch) => state.entities[patch.id] !== undefined)
-        .map((patch) => ({
-          id: patch.id,
-          changes: {
-            ...patch.changes,
-            version: patch.version
-          } as Partial<Unit>
-        }));
+      const updates = buildUnitPatchUpdates(state.entities, action.payload.patches);
 
       unitsAdapter.updateMany(state, updates);
       state.lastAppliedTick = Math.max(state.lastAppliedTick, action.payload.tickNumber);

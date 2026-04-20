@@ -1,23 +1,15 @@
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
-import { z } from 'zod';
 import { TICK_MS } from './config/constants.js';
 import { createInitialSnapshot } from './domain/createInitialUnits.js';
-import { HttpError } from './errors/httpError.js';
 import { errorMiddleware, notFoundMiddleware } from './middleware/errorMiddleware.js';
 import { UnitSimulationService } from './services/unitSimulationService.js';
 import { SseBroadcaster } from './transport/sseBroadcaster.js';
 import type { TickDelta } from './domain/battlefield.types.js';
+import { parseEmptyQuery, parseStreamQuery } from './transport/queryParams.js';
 
 const HEARTBEAT_MS = 15_000;
 const MAX_TICK_HISTORY = 300;
-
-const emptyQuerySchema = z.object({}).strict();
-const streamQuerySchema = z
-  .object({
-    sinceTick: z.coerce.number().int().min(0).optional()
-  })
-  .strict();
 
 const asyncRoute = (
   handler: (req: Request, res: Response, next: NextFunction) => Promise<void> | void
@@ -25,15 +17,6 @@ const asyncRoute = (
   return (req: Request, res: Response, next: NextFunction): void => {
     Promise.resolve(handler(req, res, next)).catch(next);
   };
-};
-
-const parseQuery = <TSchema extends z.ZodTypeAny>(schema: TSchema, query: unknown): z.infer<TSchema> => {
-  const result = schema.safeParse(query);
-  if (!result.success) {
-    throw new HttpError(400, 'Invalid query parameters', result.error.issues);
-  }
-
-  return result.data;
 };
 
 export const createApp = () => {
@@ -49,7 +32,7 @@ export const createApp = () => {
   app.get(
     '/api/health',
     asyncRoute((req, res) => {
-      parseQuery(emptyQuerySchema, req.query);
+      parseEmptyQuery(req.query);
 
       res.json({
         ok: true,
@@ -63,7 +46,7 @@ export const createApp = () => {
   app.get(
     '/api/snapshot',
     asyncRoute((req, res) => {
-      parseQuery(emptyQuerySchema, req.query);
+      parseEmptyQuery(req.query);
 
       res.json({
         tickNumber: simulation.getTickNumber(),
@@ -76,7 +59,7 @@ export const createApp = () => {
   app.get(
     '/api/stream',
     asyncRoute((req, res) => {
-      const { sinceTick } = parseQuery(streamQuerySchema, req.query);
+      const { sinceTick } = parseStreamQuery(req.query);
 
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache, no-transform');
