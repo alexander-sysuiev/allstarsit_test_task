@@ -3,7 +3,6 @@ import { applyUnitPatches } from '../../entities/units/store';
 import type { AppDispatch } from '../index';
 import { appendEvents } from '../slices/eventsFeedSlice';
 import { setKpisFromDelta } from '../slices/kpisSlice';
-import { recordTickMetrics } from '../slices/performanceSlice';
 
 export const applyTickDeltaToStore = (dispatch: AppDispatch, delta: TickDelta): void => {
   // Tick payloads carry only changed units; reducer applies field-level patches in place.
@@ -22,14 +21,6 @@ export const applyTickDeltaToStore = (dispatch: AppDispatch, delta: TickDelta): 
     setKpisFromDelta({
       tickNumber: delta.tickNumber,
       kpis: delta.kpis
-    })
-  );
-
-  dispatch(
-    recordTickMetrics({
-      serverTime: delta.serverTime,
-      patchCount: delta.changedUnits.length,
-      receivedAt: Date.now()
     })
   );
 };

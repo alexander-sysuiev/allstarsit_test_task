@@ -4,7 +4,6 @@ import { connectionReducer } from './slices/connectionSlice';
 import { eventsFeedReducer } from './slices/eventsFeedSlice';
 import { filtersReducer } from './slices/filtersSlice';
 import { kpisReducer } from './slices/kpisSlice';
-import { performanceReducer } from './slices/performanceSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,7 +11,6 @@ export const store = configureStore({
     filters: filtersReducer,
     eventsFeed: eventsFeedReducer,
     kpis: kpisReducer,
-    performance: performanceReducer,
     connection: connectionReducer
   }
 });

@@ -1,4 +1,5 @@
 import type { TickDelta } from '../entities/units/types';
+import { markApiEnd, markApiStart, measureApiSpan } from './performanceMarks';
 
 const STREAM_URL = 'http://localhost:4000/api/stream';
 
@@ -19,6 +20,8 @@ const toQuery = (sinceTick?: number): string => {
 };
 
 export const connectUnitStream = (options: ConnectStreamOptions): (() => void) => {
+  const measureName = 'api:stream-connect';
+  const startMark = markApiStart(measureName);
   const stream = new EventSource(`${STREAM_URL}${toQuery(options.sinceTick)}`);
 
   stream.addEventListener('ready', (event) => {
@@ -27,6 +30,8 @@ export const connectUnitStream = (options: ConnectStreamOptions): (() => void) =
     }
 
     const payload = JSON.parse(event.data) as { tickNumber: number; serverTime: number };
+    const endMark = markApiEnd(measureName);
+    measureApiSpan(measureName, startMark, endMark);
     options.onReady(payload);
   });
 
