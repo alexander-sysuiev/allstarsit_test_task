@@ -4,36 +4,33 @@ import { useAppSelector } from '../../store/hooks';
 const ZONE_ORDER: Zone[] = ['north-west', 'north-east', 'south-west', 'south-east'];
 
 export const KpiCards = (): JSX.Element => {
-  const connection = useAppSelector((state) => state.connection);
   const kpis = useAppSelector((state) => state.kpis);
 
+  const zoneSummary = ZONE_ORDER.map((zone) => {
+    const owner = kpis.data?.zoneControl[zone] ?? 'neutral';
+    return `${zone.replace('-', ' ')}: ${owner}`;
+  }).join(' | ');
+
   return (
-    <section className="kpi-grid">
-      <article className="panel kpi-card">
-        <p className="kpi-label">Units Alive</p>
-        <p className="kpi-value">{kpis.data?.unitsAlive ?? 0}</p>
-        <p className="kpi-meta">Live total at tick {kpis.tickNumber}</p>
+    <section className="panel kpi-strip">
+      <article className="kpi-strip-item">
+        <div className="kpi-inline">
+          <p className="kpi-inline-text">Units Alive:</p>
+          <p className="kpi-inline-text">{kpis.data?.unitsAlive ?? 0}</p>
+        </div>
       </article>
 
-      <article className="panel kpi-card">
-        <p className="kpi-label">Destroyed</p>
-        <p className="kpi-value">{kpis.data?.destroyedCount ?? 0}</p>
-        <p className="kpi-meta">Connection: {connection.phase}</p>
+      <article className="kpi-strip-item">
+        <div className="kpi-inline">
+          <p className="kpi-inline-text">Units Destroyed:</p>
+          <p className="kpi-inline-text">{kpis.data?.destroyedCount ?? 0}</p>
+        </div>
       </article>
 
-      <article className="panel kpi-card kpi-card-wide">
-        <p className="kpi-label">Zone Control</p>
-        <div className="zone-control-grid">
-          {ZONE_ORDER.map((zone) => {
-            const owner = kpis.data?.zoneControl[zone] ?? 'neutral';
-
-            return (
-              <div key={zone} className={`zone-chip zone-${owner}`}>
-                <span>{zone}</span>
-                <strong>{owner}</strong>
-              </div>
-            );
-          })}
+      <article className="kpi-strip-item">
+        <div className="kpi-inline kpi-inline-zone">
+          <p className="kpi-inline-text">Zone Control:</p>
+          <p className="kpi-inline-text kpi-inline-zone-value">{zoneSummary}</p>
         </div>
       </article>
     </section>

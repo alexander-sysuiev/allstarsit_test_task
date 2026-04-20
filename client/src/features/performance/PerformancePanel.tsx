@@ -43,36 +43,51 @@ const PerformancePanelComponent = (): JSX.Element => {
   return (
     <section className="performance-panel">
       <div className="performance-grid">
-        <div className="performance-metric">
-          <span className="performance-label">FPS</span>
-          <strong>{snapshot.fps.toFixed(1)}</strong>
+        <div className="performance-metrics-list">
+          <div className="performance-metric">
+            <span className="sketch-box" />
+            <div>
+              <span className="performance-label">FPS</span>
+              <strong>{snapshot.fps.toFixed(1)}</strong>
+            </div>
+          </div>
+
+          <div className="performance-metric">
+            <span className="sketch-box" />
+            <div>
+              <span className="performance-label">Frame time</span>
+              <strong>{formatMs(snapshot.frameTimeMs)}</strong>
+            </div>
+          </div>
+
+          <div className="performance-metric">
+            <span className="sketch-box" />
+            <div>
+              <span className="performance-label">JS heap usage</span>
+              <strong>{formatMb(snapshot.heapUsedMb)}</strong>
+            </div>
+          </div>
+
+          <div className="performance-metric">
+            <span className="sketch-box" />
+            <div>
+              <span className="performance-label">API latency</span>
+              <strong>{formatMs(snapshot.apiLatencyMs)}</strong>
+            </div>
+          </div>
         </div>
 
-        <div className="performance-metric">
-          <span className="performance-label">Frame Time</span>
-          <strong>{formatMs(snapshot.frameTimeMs)}</strong>
-        </div>
-
-        <div className="performance-metric">
-          <span className="performance-label">Heap Usage</span>
-          <strong>{formatMb(snapshot.heapUsedMb)}</strong>
-          <span className="performance-subtle">Limit: {formatMb(snapshot.heapLimitMb)}</span>
-        </div>
-
-        <div className="performance-metric">
-          <span className="performance-label">API Latency</span>
-          <strong>{formatMs(snapshot.apiLatencyMs)}</strong>
-        </div>
-
-        <div className="performance-metric">
-          <span className="performance-label">Store Updates</span>
-          <strong>{snapshot.storeUpdatesPerSecond.toFixed(1)} /s</strong>
-        </div>
-
-        <div className="performance-metric">
-          <span className="performance-label">Long Tasks</span>
-          <strong>{snapshot.longTasksPerMinute} /min</strong>
-          <span className="performance-subtle">Max: {formatMs(snapshot.maxLongTaskMs)}</span>
+        <div className="performance-placeholder">
+          <div className="performance-placeholder-copy">
+            <span className="performance-placeholder-title">Performance Stats</span>
+            <span className="performance-subtle">Heap limit: {formatMb(snapshot.heapLimitMb)}</span>
+            <span className="performance-subtle">
+              Store updates: {snapshot.storeUpdatesPerSecond.toFixed(1)} /s
+            </span>
+            <span className="performance-subtle">
+              Long tasks: {snapshot.longTasksPerMinute} /min | Max {formatMs(snapshot.maxLongTaskMs)}
+            </span>
+          </div>
         </div>
       </div>
     </section>

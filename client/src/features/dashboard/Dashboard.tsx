@@ -3,43 +3,67 @@ import { KpiCards } from '../kpis/KpiCards';
 import { MapCanvas } from '../map/MapCanvas';
 import { PerformancePanel } from '../performance/PerformancePanel';
 import { UnitList } from '../unit-list/UnitList';
-import { useAppSelector } from '../../store/hooks';
 
 export const Dashboard = (): JSX.Element => {
-  const filters = useAppSelector((state) => state.filters);
-
   return (
-    <main className="layout">
-      <section className="layout-full">
-        <h1>Battle Dashboard</h1>
+    <main className="dashboard-shell">
+      <section className="dashboard-header">
+        <h1 className="dashboard-title">War Room Control Dashboard</h1>
         <KpiCards />
       </section>
 
-      <section className="panel metrics">
-        <h2>Filters (Placeholder)</h2>
-        <p>Team: {filters.team}</p>
-        <p>Zone: {filters.zone}</p>
-        <p>Include destroyed: {String(filters.includeDestroyed)}</p>
+      <section className="layout-top">
+        <section className="panel panel-map">
+          <div className="panel-heading">
+            <h2>Tactical Map</h2>
+          </div>
+          <MapCanvas />
+        </section>
+
+        <div className="side-stack">
+          <section className="panel panel-units">
+            <div className="panel-heading">
+              <h2>Units Panel</h2>
+            </div>
+            <UnitList />
+          </section>
+
+          <section className="panel panel-events">
+            <div className="panel-heading">
+              <h2>Event Feed</h2>
+            </div>
+            <EventFeed />
+          </section>
+        </div>
       </section>
 
-      <section className="panel metrics">
-        <h2>Performance</h2>
-        <PerformancePanel />
-      </section>
+      <section className="layout-bottom">
+        <section className="panel panel-legend">
+          <div className="panel-heading">
+            <h2>Legend / Filters</h2>
+          </div>
+          <div className="legend-list">
+            <label className="legend-item">
+              <span className="sketch-box sketch-box-red" />
+              <span>Alpha Team</span>
+            </label>
+            <label className="legend-item">
+              <span className="sketch-box sketch-box-blue" />
+              <span>Bravo Team</span>
+            </label>
+            <label className="legend-item">
+              <span className="sketch-box sketch-box-zone" />
+              <span>Control Zone</span>
+            </label>
+          </div>
+        </section>
 
-      <section className="panel map">
-        <h2>Map</h2>
-        <MapCanvas />
-      </section>
-
-      <section className="panel list">
-        <h2>Units</h2>
-        <UnitList />
-      </section>
-
-      <section className="panel list">
-        <h2>Events Feed</h2>
-        <EventFeed />
+        <section className="panel panel-performance">
+          <div className="panel-heading">
+            <h2>Performance Panel</h2>
+          </div>
+          <PerformancePanel />
+        </section>
       </section>
     </main>
   );
