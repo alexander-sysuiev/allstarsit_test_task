@@ -1,30 +1,114 @@
 import { useEffect } from 'react';
+import { setSnapshotUnits } from '../entities/units/store';
 import { Dashboard } from '../features/dashboard/Dashboard';
-import { fetchInitialUnits } from '../lib/api';
+import { fetchInitialSnapshot } from '../lib/api';
 import { connectUnitStream } from '../lib/sse';
 import { useAppDispatch } from '../store/hooks';
-import { setAllUnits, upsertUnitDeltas } from '../entities/units/store';
+import {
+  setConnected,
+  setConnectionError,
+  setConnecting,
+  setReconnecting
+} from '../store/slices/connectionSlice';
+import { setKpisSnapshot } from '../store/slices/kpisSlice';
+import { applyTickDeltaToStore } from '../store/services/applyTickDelta';
+
+const RECONNECT_DELAY_MS = 1_500;
 
 export const App = (): JSX.Element => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     let active = true;
+    let closeStream: (() => void) | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let currentTick = 0;
 
-    // TODO: add loading/error state to avoid silent fetch failures in UI.
-    void fetchInitialUnits().then((units) => {
-      if (active) {
-        dispatch(setAllUnits(units));
-      }
-    });
+    const connect = (sinceTick?: number): void => {
+      closeStream = connectUnitStream({
+        sinceTick,
+        onReady: ({ serverTime }) => {
+          if (!active) {
+            return;
+          }
+          dispatch(setConnected({ at: serverTime }));
+        },
+        onTickDelta: (delta) => {
+          if (!active) {
+            return;
+          }
+          currentTick = Math.max(currentTick, delta.tickNumber);
+          applyTickDeltaToStore(dispatch, delta);
+        },
+        onHeartbeat: () => {
+          // TODO: expose heartbeat metrics in dedicated monitoring panel if needed.
+        },
+        onError: (error) => {
+          if (!active) {
+            return;
+          }
 
-    const close = connectUnitStream((payload) => {
-      dispatch(upsertUnitDeltas(payload.updates));
-    });
+          if (closeStream !== null) {
+            closeStream();
+            closeStream = null;
+          }
+
+          dispatch(setConnectionError({ message: error.message }));
+          dispatch(setReconnecting());
+
+          if (reconnectTimer !== null) {
+            clearTimeout(reconnectTimer);
+          }
+
+          reconnectTimer = setTimeout(() => {
+            if (!active) {
+              return;
+            }
+            connect(currentTick);
+          }, RECONNECT_DELAY_MS);
+        }
+      });
+    };
+
+    dispatch(setConnecting());
+
+    void fetchInitialSnapshot()
+      .then((snapshot) => {
+        if (!active) {
+          return;
+        }
+
+        currentTick = snapshot.tickNumber;
+
+        dispatch(
+          setSnapshotUnits({
+            units: snapshot.units,
+            tickNumber: snapshot.tickNumber
+          })
+        );
+
+        dispatch(
+          setKpisSnapshot({
+            tickNumber: snapshot.tickNumber,
+            kpis: snapshot.kpis
+          })
+        );
+
+        connect(snapshot.tickNumber);
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : 'Failed to load snapshot';
+        dispatch(setConnectionError({ message }));
+      });
 
     return () => {
       active = false;
-      close();
+      if (reconnectTimer !== null) {
+        clearTimeout(reconnectTimer);
+      }
+      if (closeStream !== null) {
+        closeStream();
+      }
     };
   }, [dispatch]);
 

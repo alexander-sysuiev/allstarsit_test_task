@@ -16,7 +16,6 @@ export const MapCanvas = ({ units, width, height }: MapCanvasProps): JSX.Element
       return;
     }
 
-    // TODO: move rendering to OffscreenCanvas/worker if paint cost becomes high.
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       return;
@@ -26,7 +25,7 @@ export const MapCanvas = ({ units, width, height }: MapCanvasProps): JSX.Element
 
     for (const unit of units) {
       ctx.fillStyle = unit.team === 'red' ? '#d94848' : '#3b82f6';
-      ctx.globalAlpha = unit.status === 'destroyed' ? 0.25 : 0.95;
+      ctx.globalAlpha = unit.alive ? 0.95 : 0.25;
       ctx.fillRect((unit.x / 2000) * width, (unit.y / 2000) * height, 2, 2);
     }
 

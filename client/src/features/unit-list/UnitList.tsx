@@ -40,7 +40,7 @@ export const UnitList = ({ units }: UnitListProps): JSX.Element => {
             >
               <span>{unit.id}</span>
               <span>{unit.team}</span>
-              <span>HP: {unit.hp}</span>
+              <span>HP: {unit.health}</span>
               <span>{unit.status}</span>
             </div>
           );
