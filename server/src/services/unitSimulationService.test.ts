@@ -60,3 +60,16 @@ test('tick advances simulation state and returns a consistent delta payload', ()
     );
   });
 });
+
+test('constructor rejects overlapping starting positions', () => {
+  const units: Unit[] = [
+    createUnit(0),
+    {
+      ...createUnit(1),
+      x: 0,
+      y: 0
+    }
+  ];
+
+  assert.throws(() => new UnitSimulationService(units), /duplicate unit position/);
+});

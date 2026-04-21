@@ -6,6 +6,7 @@ import {
 } from '../config/constants.js';
 import { randomAttack, randomHealing, randomIdle, randomMovement, type SimpleActionResult } from '../domain/actions.js';
 import { computeBattlefieldKpis } from '../domain/kpis.js';
+import { toPositionKey } from '../domain/positions.js';
 import type {
   BattlefieldKpis,
   BattleEvent,
@@ -21,13 +22,20 @@ const ACTIVE_UNIT_STATUSES = new Set<Unit['status']>(['idle', 'moving', 'attacki
 export class UnitSimulationService {
   private readonly unitsById = new Map<string, Unit>();
   private readonly unitIds: string[];
+  private readonly unitIdByPosition = new Map<string, string>();
   private tickNumber = 0;
   private currentKpis: BattlefieldKpis;
   private previousZoneControl: Record<Zone, ZoneControl>;
 
   constructor(initialUnits: Unit[]) {
     for (const unit of initialUnits) {
+      const positionKey = toPositionKey(unit.x, unit.y);
+      if (this.unitIdByPosition.has(positionKey)) {
+        throw new Error(`duplicate unit position detected at ${positionKey}`);
+      }
+
       this.unitsById.set(unit.id, unit);
+      this.unitIdByPosition.set(positionKey, unit.id);
     }
     this.unitIds = initialUnits.map((unit) => unit.id);
     this.currentKpis = computeBattlefieldKpis(initialUnits);
@@ -66,7 +74,13 @@ export class UnitSimulationService {
       const roll = Math.random();
 
       if (roll < 0.45) {
-        const result = randomMovement(actor, { width: WORLD_WIDTH, height: WORLD_HEIGHT });
+        const proposedResult = randomMovement(actor, { width: WORLD_WIDTH, height: WORLD_HEIGHT });
+        const nextX = proposedResult.changes.x ?? actor.x;
+        const nextY = proposedResult.changes.y ?? actor.y;
+        const result = this.isPositionOccupiedByAnotherUnit(actor.id, nextX, nextY)
+          ? randomIdle(actor)
+          : proposedResult;
+
         this.applySimpleAction(actor.id, result, changedUnitsById, events, serverTime);
         continue;
       }
@@ -233,6 +247,11 @@ export class UnitSimulationService {
       return;
     }
 
+    if (changes.x !== undefined || changes.y !== undefined) {
+      this.unitIdByPosition.delete(toPositionKey(current.x, current.y));
+      this.unitIdByPosition.set(toPositionKey(next.x, next.y), unitId);
+    }
+
     this.unitsById.set(unitId, next);
 
     const existing = changedUnitsById.get(unitId);
@@ -253,6 +272,11 @@ export class UnitSimulationService {
         ...changes
       }
     });
+  }
+
+  private isPositionOccupiedByAnotherUnit(unitId: string, x: number, y: number): boolean {
+    const occupantId = this.unitIdByPosition.get(toPositionKey(x, y));
+    return occupantId !== undefined && occupantId !== unitId;
   }
 
   private withTickContext(event: Omit<BattleEvent, 'tickNumber' | 'serverTime'>, serverTime: number): BattleEvent {
