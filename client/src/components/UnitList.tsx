@@ -1,9 +1,9 @@
 import { memo, useDeferredValue, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { unitsSelectors } from '../../entities/units/store';
-import type { Unit, UnitStatus } from '../../entities/units/types';
-import { useAppSelector } from '../../store/hooks';
-import { filterUnitsForList, normalizeHealthRange } from './unitListFilters';
+import { unitsSelectors } from '../entities/units/store';
+import type { Unit, UnitStatus } from '../entities/units/types';
+import { useAppSelector } from '../store/hooks';
+import { filterUnitsForList, normalizeHealthRange } from '../features/unit-list/unitListFilters';
 
 const STATUS_OPTIONS: Array<UnitStatus | 'all'> = ['all', 'idle', 'moving', 'attacking', 'healing', 'dead'];
 

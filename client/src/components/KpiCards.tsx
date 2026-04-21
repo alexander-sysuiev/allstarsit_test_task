@@ -1,5 +1,5 @@
-import type { Zone } from '../../entities/units/types';
-import { useAppSelector } from '../../store/hooks';
+import type { Zone } from '../entities/units/types';
+import { useAppSelector } from '../store/hooks';
 
 const ZONE_ORDER: Zone[] = ['north-west', 'north-east', 'south-west', 'south-east'];
 

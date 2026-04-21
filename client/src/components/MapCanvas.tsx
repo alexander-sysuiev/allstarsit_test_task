@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef } from 'react';
-import { unitsSelectors, selectLastAppliedTick } from '../../entities/units/store';
-import { store } from '../../store';
-import { TacticalMapRenderer } from './tacticalMapRenderer';
+import { unitsSelectors, selectLastAppliedTick } from '../entities/units/store';
+import { store } from '../store';
+import { TacticalMapRenderer } from '../features/map/tacticalMapRenderer';
 
 const MapCanvasComponent = (): JSX.Element => {
   const containerRef = useRef<HTMLDivElement | null>(null);

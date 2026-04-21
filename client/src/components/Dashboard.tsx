@@ -1,8 +1,9 @@
-import { EventFeed } from '../events/EventFeed';
-import { KpiCards } from '../kpis/KpiCards';
-import { MapCanvas } from '../map/MapCanvas';
-import { PerformancePanel } from '../performance/PerformancePanel';
-import { UnitList } from '../unit-list/UnitList';
+import { EventFeed } from './EventFeed';
+import { KpiCards } from './KpiCards';
+import { LegendPanel } from './LegendPanel';
+import { MapCanvas } from './MapCanvas';
+import { PerformancePanel } from './PerformancePanel';
+import { UnitList } from './UnitList';
 
 export const Dashboard = (): JSX.Element => {
   return (
@@ -38,25 +39,7 @@ export const Dashboard = (): JSX.Element => {
       </section>
 
       <section className="layout-bottom">
-        <section className="panel panel-legend">
-          <div className="panel-heading">
-            <h2>Legend / Filters</h2>
-          </div>
-          <div className="legend-list">
-            <label className="legend-item">
-              <span className="sketch-box sketch-box-red" />
-              <span>Alpha Team</span>
-            </label>
-            <label className="legend-item">
-              <span className="sketch-box sketch-box-blue" />
-              <span>Bravo Team</span>
-            </label>
-            <label className="legend-item">
-              <span className="sketch-box sketch-box-zone" />
-              <span>Control Zone</span>
-            </label>
-          </div>
-        </section>
+        <LegendPanel />
 
         <section className="panel panel-performance">
           <div className="panel-heading">

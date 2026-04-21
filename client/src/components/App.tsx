@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { setSnapshotUnits } from '../entities/units/store';
-import { Dashboard } from '../features/dashboard/Dashboard';
 import { fetchInitialSnapshot } from '../lib/api';
 import { connectUnitStream } from '../lib/sse';
 import { useAppDispatch } from '../store/hooks';
@@ -12,6 +11,7 @@ import {
 } from '../store/slices/connectionSlice';
 import { setKpisSnapshot } from '../store/slices/kpisSlice';
 import { applyTickDeltaToStore } from '../store/services/applyTickDelta';
+import { Dashboard } from './Dashboard';
 
 const RECONNECT_DELAY_MS = 1_500;
 
