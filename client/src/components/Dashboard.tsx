@@ -14,39 +14,17 @@ export const Dashboard = (): JSX.Element => {
       </section>
 
       <section className="layout-top">
-        <section className="panel panel-map">
-          <div className="panel-heading">
-            <h2>Tactical Map</h2>
-          </div>
-          <MapCanvas />
-        </section>
+        <MapCanvas />
 
         <div className="side-stack">
-          <section className="panel panel-units">
-            <div className="panel-heading">
-              <h2>Units Panel</h2>
-            </div>
-            <UnitList />
-          </section>
-
-          <section className="panel panel-events">
-            <div className="panel-heading">
-              <h2>Event Feed</h2>
-            </div>
-            <EventFeed />
-          </section>
+          <UnitList />
+          <EventFeed />
         </div>
       </section>
 
       <section className="layout-bottom">
         <LegendPanel />
-
-        <section className="panel panel-performance">
-          <div className="panel-heading">
-            <h2>Performance Panel</h2>
-          </div>
-          <PerformancePanel />
-        </section>
+        <PerformancePanel />
       </section>
     </main>
   );

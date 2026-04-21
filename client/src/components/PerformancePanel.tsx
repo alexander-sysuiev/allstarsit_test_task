@@ -41,52 +41,57 @@ const PerformancePanelComponent = (): JSX.Element => {
   }, []);
 
   return (
-    <section className="performance-panel">
-      <div className="performance-grid">
-        <div className="performance-metrics-list">
-          <div className="performance-metric">
-            <span className="sketch-box" />
-            <div>
-              <span className="performance-label">FPS</span>
-              <strong>{snapshot.fps.toFixed(1)}</strong>
+    <section className="panel panel-performance">
+      <div className="panel-heading">
+        <h2>Performance Panel</h2>
+      </div>
+      <div className="performance-panel">
+        <div className="performance-grid">
+          <div className="performance-metrics-list">
+            <div className="performance-metric">
+              <span className="sketch-box" />
+              <div>
+                <span className="performance-label">FPS</span>
+                <strong>{snapshot.fps.toFixed(1)}</strong>
+              </div>
+            </div>
+
+            <div className="performance-metric">
+              <span className="sketch-box" />
+              <div>
+                <span className="performance-label">Frame time</span>
+                <strong>{formatMs(snapshot.frameTimeMs)}</strong>
+              </div>
+            </div>
+
+            <div className="performance-metric">
+              <span className="sketch-box" />
+              <div>
+                <span className="performance-label">JS heap usage</span>
+                <strong>{formatMb(snapshot.heapUsedMb)}</strong>
+              </div>
+            </div>
+
+            <div className="performance-metric">
+              <span className="sketch-box" />
+              <div>
+                <span className="performance-label">API latency</span>
+                <strong>{formatMs(snapshot.apiLatencyMs)}</strong>
+              </div>
             </div>
           </div>
 
-          <div className="performance-metric">
-            <span className="sketch-box" />
-            <div>
-              <span className="performance-label">Frame time</span>
-              <strong>{formatMs(snapshot.frameTimeMs)}</strong>
+          <div className="performance-placeholder">
+            <div className="performance-placeholder-copy">
+              <span className="performance-placeholder-title">Performance Stats</span>
+              <span className="performance-subtle">Heap limit: {formatMb(snapshot.heapLimitMb)}</span>
+              <span className="performance-subtle">
+                Store updates: {snapshot.storeUpdatesPerSecond.toFixed(1)} /s
+              </span>
+              <span className="performance-subtle">
+                Long tasks: {snapshot.longTasksPerMinute} /min | Max {formatMs(snapshot.maxLongTaskMs)}
+              </span>
             </div>
-          </div>
-
-          <div className="performance-metric">
-            <span className="sketch-box" />
-            <div>
-              <span className="performance-label">JS heap usage</span>
-              <strong>{formatMb(snapshot.heapUsedMb)}</strong>
-            </div>
-          </div>
-
-          <div className="performance-metric">
-            <span className="sketch-box" />
-            <div>
-              <span className="performance-label">API latency</span>
-              <strong>{formatMs(snapshot.apiLatencyMs)}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div className="performance-placeholder">
-          <div className="performance-placeholder-copy">
-            <span className="performance-placeholder-title">Performance Stats</span>
-            <span className="performance-subtle">Heap limit: {formatMb(snapshot.heapLimitMb)}</span>
-            <span className="performance-subtle">
-              Store updates: {snapshot.storeUpdatesPerSecond.toFixed(1)} /s
-            </span>
-            <span className="performance-subtle">
-              Long tasks: {snapshot.longTasksPerMinute} /min | Max {formatMs(snapshot.maxLongTaskMs)}
-            </span>
           </div>
         </div>
       </div>

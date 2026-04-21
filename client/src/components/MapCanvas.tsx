@@ -50,9 +50,14 @@ const MapCanvasComponent = (): JSX.Element => {
   }, []);
 
   return (
-    <div ref={containerRef} className="map-canvas-shell">
-      <canvas ref={canvasRef} className="map-canvas" />
-    </div>
+    <section className="panel panel-map">
+      <div className="panel-heading">
+        <h2>Tactical Map</h2>
+      </div>
+      <div ref={containerRef} className="map-canvas-shell">
+        <canvas ref={canvasRef} className="map-canvas" />
+      </div>
+    </section>
   );
 };
 

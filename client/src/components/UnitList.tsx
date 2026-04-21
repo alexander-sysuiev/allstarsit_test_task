@@ -62,86 +62,91 @@ export const UnitList = (): JSX.Element => {
   });
 
   return (
-    <section className="unit-panel">
-      <div className="unit-panel-controls">
-        <label className="unit-panel-field">
+    <section className="panel panel-units">
+      <div className="panel-heading">
+        <h2>Units Panel</h2>
+      </div>
+      <div className="unit-panel">
+        <div className="unit-panel-controls">
+          <label className="unit-panel-field">
+            <span>Name</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search unit name"
+            />
+          </label>
+
+          <label className="unit-panel-field">
+            <span>Status</span>
+            <select value={status} onChange={(event) => setStatus(event.target.value as UnitStatus | 'all')}>
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="unit-panel-field">
+            <span>Min HP</span>
+            <input
+              type="number"
+              min="0"
+              value={minHealth}
+              onChange={(event) => setMinHealth(event.target.value)}
+            />
+          </label>
+
+          <label className="unit-panel-field">
+            <span>Max HP</span>
+            <input
+              type="number"
+              min="0"
+              value={maxHealth}
+              onChange={(event) => setMaxHealth(event.target.value)}
+            />
+          </label>
+        </div>
+
+        <div className="unit-panel-summary">
+          <span>{filteredUnits.length} units</span>
+        </div>
+
+        <div className="unit-list-head unit-row-grid">
           <span>Name</span>
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search unit name"
-          />
-        </label>
-
-        <label className="unit-panel-field">
+          <span>Team</span>
           <span>Status</span>
-          <select value={status} onChange={(event) => setStatus(event.target.value as UnitStatus | 'all')}>
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+          <span>HP</span>
+          <span>Zone / Coords</span>
+        </div>
 
-        <label className="unit-panel-field">
-          <span>Min HP</span>
-          <input
-            type="number"
-            min="0"
-            value={minHealth}
-            onChange={(event) => setMinHealth(event.target.value)}
-          />
-        </label>
+        <div ref={parentRef} className="unit-list-scroll">
+          <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const unit = filteredUnits[virtualRow.index];
+              if (!unit) {
+                return null;
+              }
 
-        <label className="unit-panel-field">
-          <span>Max HP</span>
-          <input
-            type="number"
-            min="0"
-            value={maxHealth}
-            onChange={(event) => setMaxHealth(event.target.value)}
-          />
-        </label>
-      </div>
-
-      <div className="unit-panel-summary">
-        <span>{filteredUnits.length} units</span>
-      </div>
-
-      <div className="unit-list-head unit-row-grid">
-        <span>Name</span>
-        <span>Team</span>
-        <span>Status</span>
-        <span>HP</span>
-        <span>Zone / Coords</span>
-      </div>
-
-      <div ref={parentRef} className="unit-list-scroll">
-        <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
-          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            const unit = filteredUnits[virtualRow.index];
-            if (!unit) {
-              return null;
-            }
-
-            return (
-              <div
-                key={unit.id}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start}px)`
-                }}
-              >
-                <UnitRow unit={unit} />
-              </div>
-            );
-          })}
+              return (
+                <div
+                  key={unit.id}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`
+                  }}
+                >
+                  <UnitRow unit={unit} />
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
