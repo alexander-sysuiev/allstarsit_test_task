@@ -33,6 +33,8 @@ export const KpiCards = (): JSX.Element => {
           <p className="kpi-inline-text kpi-inline-zone-value">{zoneSummary}</p>
         </div>
       </article>
+
+      <div className="kpi-tick">Tick {kpis.tickNumber}</div>
     </section>
   );
 };
