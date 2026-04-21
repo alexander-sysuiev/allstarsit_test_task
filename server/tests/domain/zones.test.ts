@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { calculateZoneControl } from './zones.js';
-import type { Unit } from './battlefield.types.js';
+import type { Unit } from '../../src/domain/battlefield.types.js';
+import { calculateZoneControl } from '../../src/domain/zones.js';
 
 const createUnit = (overrides: Partial<Unit>): Unit => ({
   id: overrides.id ?? 'unit-1',

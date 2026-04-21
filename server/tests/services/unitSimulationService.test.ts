@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { UnitSimulationService } from './unitSimulationService.js';
-import type { Unit } from '../domain/battlefield.types.js';
+import type { Unit } from '../../src/domain/battlefield.types.js';
+import { UnitSimulationService } from '../../src/services/unitSimulationService.js';
 
 const createUnit = (index: number): Unit => ({
   id: `unit-${index}`,

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createInitialUnits } from './createInitialUnits.js';
+import { createInitialUnits } from '../../src/domain/createInitialUnits.js';
 
 test('createInitialUnits allocates unique coordinates', () => {
   const units = createInitialUnits();

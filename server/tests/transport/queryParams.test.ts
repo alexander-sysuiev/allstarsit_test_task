@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { HttpError } from '../errors/httpError.js';
-import { parseEmptyQuery, parseStreamQuery } from './queryParams.js';
+import { HttpError } from '../../src/errors/httpError.js';
+import { parseEmptyQuery, parseStreamQuery } from '../../src/transport/queryParams.js';
 
 test('parseStreamQuery accepts a valid sinceTick query', () => {
   assert.deepEqual(parseStreamQuery({ sinceTick: '12' }), { sinceTick: 12 });
