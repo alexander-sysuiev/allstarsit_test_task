@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from 'react';
-import { BrowserPerformanceMonitor, type PerformanceSnapshot } from '../features/performance/browserPerformance';
+import { BrowserPerformanceMonitor, type PerformanceSnapshot } from '../utils/browserPerformance';
 
 const EMPTY_SNAPSHOT: PerformanceSnapshot = {
   fps: 0,

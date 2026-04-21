@@ -1,5 +1,5 @@
-import type { Unit } from '../../entities/units/types';
-import type { FiltersState } from '../../store/slices/filtersSlice';
+import type { Unit } from '../entities/units/types';
+import type { FiltersState } from '../store/slices/filtersSlice';
 
 const WORLD_WIDTH = 2000;
 const WORLD_HEIGHT = 2000;

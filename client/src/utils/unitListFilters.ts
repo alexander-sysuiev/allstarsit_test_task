@@ -1,5 +1,5 @@
-import type { FiltersState } from '../../store/slices/filtersSlice';
-import type { Unit, UnitStatus } from '../../entities/units/types';
+import type { FiltersState } from '../store/slices/filtersSlice';
+import type { Unit, UnitStatus } from '../entities/units/types';
 
 export interface UnitListFilters {
   query: string;

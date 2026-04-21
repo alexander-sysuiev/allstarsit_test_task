@@ -1,4 +1,4 @@
-import { store } from '../../store';
+import { store } from '../store';
 
 const PUBLISH_INTERVAL_MS = 500;
 const API_MEASURE_PREFIX = 'api:';

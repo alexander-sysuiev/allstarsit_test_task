@@ -3,7 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { unitsSelectors } from '../entities/units/store';
 import type { Unit, UnitStatus } from '../entities/units/types';
 import { useAppSelector } from '../store/hooks';
-import { filterUnitsForList, normalizeHealthRange } from '../features/unit-list/unitListFilters';
+import { filterUnitsForList, normalizeHealthRange } from '../utils/unitListFilters';
 
 const STATUS_OPTIONS: Array<UnitStatus | 'all'> = ['all', 'idle', 'moving', 'attacking', 'healing', 'dead'];
 
