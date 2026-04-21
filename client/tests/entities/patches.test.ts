@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildUnitPatchUpdates } from './patches';
-import type { Unit, UnitPatch } from './types';
+import { buildUnitPatchUpdates } from '../../src/entities/units/patches';
+import type { Unit, UnitPatch } from '../../src/entities/units/types';
 
 const baseUnit: Unit = {
   id: 'unit-1',
