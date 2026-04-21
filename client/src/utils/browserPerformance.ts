@@ -1,5 +1,3 @@
-import { appStore } from '../store';
-
 const PUBLISH_INTERVAL_MS = 500;
 const API_MEASURE_PREFIX = 'api:';
 
@@ -15,34 +13,20 @@ export interface PerformanceSnapshot {
   fps: number;
   frameTimeMs: number;
   heapUsedMb: number | null;
-  heapLimitMb: number | null;
   apiLatencyMs: number | null;
-  longTasksPerMinute: number;
-  maxLongTaskMs: number;
-  storeUpdatesPerSecond: number;
 }
 
 interface PublishStats {
   frameCount: number;
   frameTimeSum: number;
   latestApiLatencyMs: number | null;
-  storeUpdates: number;
-}
-
-interface LongTaskSample {
-  timestamp: number;
-  duration: number;
 }
 
 const initialSnapshot = (): PerformanceSnapshot => ({
   fps: 0,
   frameTimeMs: 0,
   heapUsedMb: null,
-  heapLimitMb: null,
-  apiLatencyMs: null,
-  longTasksPerMinute: 0,
-  maxLongTaskMs: 0,
-  storeUpdatesPerSecond: 0
+  apiLatencyMs: null
 });
 
 export class BrowserPerformanceMonitor {
@@ -50,20 +34,16 @@ export class BrowserPerformanceMonitor {
   private readonly perf = window.performance as MemoryPerformance;
   private readonly intervalMs: number;
   private frameId: number | null = null;
-  private unsubscribeStore: (() => void) | null = null;
   private publishTimer: number | null = null;
   private lastFrameAt = 0;
   private lastPublishAt = 0;
   private publishStats: PublishStats = {
     frameCount: 0,
     frameTimeSum: 0,
-    latestApiLatencyMs: null,
-    storeUpdates: 0
+    latestApiLatencyMs: null
   };
-  private longTasks: LongTaskSample[] = [];
   private resourceObserver: PerformanceObserver | null = null;
   private measureObserver: PerformanceObserver | null = null;
-  private longTaskObserver: PerformanceObserver | null = null;
 
   constructor(publish: (snapshot: PerformanceSnapshot) => void, intervalMs = PUBLISH_INTERVAL_MS) {
     this.publish = publish;
@@ -79,12 +59,10 @@ export class BrowserPerformanceMonitor {
     this.lastFrameAt = 0;
 
     this.frameId = requestAnimationFrame(this.onFrame);
-    this.unsubscribeStore = appStore.subscribe(this.onStoreUpdate);
     this.publishTimer = window.setInterval(this.publishSnapshot, this.intervalMs);
 
     this.observeMeasures();
     this.observeResources();
-    this.observeLongTasks();
     this.publish(initialSnapshot());
   }
 
@@ -99,14 +77,8 @@ export class BrowserPerformanceMonitor {
       this.publishTimer = null;
     }
 
-    if (this.unsubscribeStore !== null) {
-      this.unsubscribeStore();
-      this.unsubscribeStore = null;
-    }
-
     this.resourceObserver?.disconnect();
     this.measureObserver?.disconnect();
-    this.longTaskObserver?.disconnect();
   }
 
   private readonly onFrame = (now: number): void => {
@@ -117,10 +89,6 @@ export class BrowserPerformanceMonitor {
 
     this.lastFrameAt = now;
     this.frameId = requestAnimationFrame(this.onFrame);
-  };
-
-  private readonly onStoreUpdate = (): void => {
-    this.publishStats.storeUpdates += 1;
   };
 
   private readonly onApiEntry = (duration: number): void => {
@@ -136,28 +104,20 @@ export class BrowserPerformanceMonitor {
     const elapsedMs = Math.max(1, now - this.lastPublishAt);
     this.lastPublishAt = now;
 
-    this.trimLongTasks(now);
-
     const frameCount = this.publishStats.frameCount;
     const fps = frameCount > 0 ? (frameCount * 1000) / elapsedMs : 0;
     const frameTimeMs = frameCount > 0 ? this.publishStats.frameTimeSum / frameCount : 0;
     const memory = this.perf.memory;
-    const maxLongTaskMs = this.longTasks.reduce((max, task) => Math.max(max, task.duration), 0);
 
     this.publish({
       fps,
       frameTimeMs,
       heapUsedMb: memory ? memory.usedJSHeapSize / (1024 * 1024) : null,
-      heapLimitMb: memory ? memory.jsHeapSizeLimit / (1024 * 1024) : null,
-      apiLatencyMs: this.publishStats.latestApiLatencyMs,
-      longTasksPerMinute: this.longTasks.length,
-      maxLongTaskMs,
-      storeUpdatesPerSecond: (this.publishStats.storeUpdates * 1000) / elapsedMs
+      apiLatencyMs: this.publishStats.latestApiLatencyMs
     });
 
     this.publishStats.frameCount = 0;
     this.publishStats.frameTimeSum = 0;
-    this.publishStats.storeUpdates = 0;
   };
 
   private observeMeasures(): void {
@@ -196,35 +156,5 @@ export class BrowserPerformanceMonitor {
     });
 
     this.resourceObserver.observe({ type: 'resource', buffered: true });
-  }
-
-  private observeLongTasks(): void {
-    if (typeof PerformanceObserver === 'undefined') {
-      return;
-    }
-
-    try {
-      this.longTaskObserver = new PerformanceObserver((list) => {
-        const now = performance.now();
-
-        for (const entry of list.getEntries()) {
-          this.longTasks.push({
-            timestamp: now,
-            duration: entry.duration
-          });
-        }
-
-        this.trimLongTasks(now);
-      });
-
-      this.longTaskObserver.observe({ type: 'longtask', buffered: true });
-    } catch {
-      this.longTaskObserver = null;
-    }
-  }
-
-  private trimLongTasks(now: number): void {
-    const cutoff = now - 60_000;
-    this.longTasks = this.longTasks.filter((task) => task.timestamp >= cutoff);
   }
 }

@@ -5,11 +5,7 @@ const EMPTY_SNAPSHOT: PerformanceSnapshot = {
   fps: 0,
   frameTimeMs: 0,
   heapUsedMb: null,
-  heapLimitMb: null,
-  apiLatencyMs: null,
-  longTasksPerMinute: 0,
-  maxLongTaskMs: 0,
-  storeUpdatesPerSecond: 0
+  apiLatencyMs: null
 };
 
 const formatMs = (value: number | null): string => {
@@ -78,19 +74,6 @@ const PerformancePanelComponent = (): JSX.Element => {
                 <span className="performance-label">API latency</span>
                 <strong>{formatMs(snapshot.apiLatencyMs)}</strong>
               </div>
-            </div>
-          </div>
-
-          <div className="performance-placeholder">
-            <div className="performance-placeholder-copy">
-              <span className="performance-placeholder-title">Performance Stats</span>
-              <span className="performance-subtle">Heap limit: {formatMb(snapshot.heapLimitMb)}</span>
-              <span className="performance-subtle">
-                Store updates: {snapshot.storeUpdatesPerSecond.toFixed(1)} /s
-              </span>
-              <span className="performance-subtle">
-                Long tasks: {snapshot.longTasksPerMinute} /min | Max {formatMs(snapshot.maxLongTaskMs)}
-              </span>
             </div>
           </div>
         </div>
