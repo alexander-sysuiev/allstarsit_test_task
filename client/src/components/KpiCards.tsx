@@ -1,10 +1,10 @@
 import type { Zone } from '../entities/units/types';
-import { useAppSelector } from '../store/hooks';
+import { useAppStore } from '../store/hooks';
 
 const ZONE_ORDER: Zone[] = ['north-west', 'north-east', 'south-west', 'south-east'];
 
 export const KpiCards = (): JSX.Element => {
-  const kpis = useAppSelector((state) => state.kpis);
+  const kpis = useAppStore((state) => state.kpis);
 
   const zoneSummary = ZONE_ORDER.map((zone) => {
     const owner = kpis.data?.zoneControl[zone] ?? 'neutral';

@@ -1,8 +1,7 @@
 import { memo, useDeferredValue, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { unitsSelectors } from '../entities/units/store';
 import type { Unit, UnitStatus } from '../entities/units/types';
-import { useAppSelector } from '../store/hooks';
+import { useAppStore } from '../store/hooks';
 import { filterUnitsForList, normalizeHealthRange } from '../utils/unitListFilters';
 
 const STATUS_OPTIONS: Array<UnitStatus | 'all'> = ['all', 'idle', 'moving', 'attacking', 'healing', 'dead'];
@@ -23,13 +22,20 @@ const UnitRow = memo(({ unit }: { unit: Unit }): JSX.Element => {
 
 export const UnitList = (): JSX.Element => {
   const parentRef = useRef<HTMLDivElement | null>(null);
-  const units = useAppSelector(unitsSelectors.selectAll);
-  const battlefieldFilters = useAppSelector((state) => state.filters);
+  const unitIds = useAppStore((state) => state.units.allIds);
+  const unitsById = useAppStore((state) => state.units.byId);
+  const battlefieldFilters = useAppStore((state) => state.filters);
 
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<UnitStatus | 'all'>('all');
   const [minHealth, setMinHealth] = useState('0');
   const [maxHealth, setMaxHealth] = useState('100');
+
+  const units = useMemo(() => {
+    return unitIds
+      .map((id) => unitsById[id])
+      .filter((unit): unit is Unit => unit !== undefined);
+  }, [unitIds, unitsById]);
 
   const deferredSearch = useDeferredValue(search);
   const normalizedQuery = deferredSearch.trim().toLowerCase();

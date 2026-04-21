@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef } from 'react';
 import { unitsSelectors, selectLastAppliedTick } from '../entities/units/store';
-import { store } from '../store';
+import { appStore } from '../store';
 import { TacticalMapRenderer } from '../utils/tacticalMapRenderer';
 
 const MapCanvasComponent = (): JSX.Element => {
@@ -19,7 +19,7 @@ const MapCanvasComponent = (): JSX.Element => {
     const renderer = new TacticalMapRenderer(canvas);
 
     const syncRenderer = (): void => {
-      const state = store.getState();
+      const state = appStore.getState();
 
       renderer.setScene({
         units: unitsSelectors.selectAll(state),
@@ -40,7 +40,7 @@ const MapCanvasComponent = (): JSX.Element => {
     resizeObserver.observe(container);
     syncRenderer();
 
-    const unsubscribe = store.subscribe(syncRenderer);
+    const unsubscribe = appStore.subscribe(syncRenderer);
 
     return () => {
       unsubscribe();

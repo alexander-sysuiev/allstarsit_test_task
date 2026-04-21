@@ -1,28 +1,19 @@
 import { useEffect } from 'react';
-import { setSnapshotUnits } from '../entities/units/store';
 import { fetchInitialSnapshot } from '../lib/api';
 import { connectUnitStream } from '../lib/sse';
-import { useAppDispatch } from '../store/hooks';
-import {
-  setConnected,
-  setConnectionError,
-  setConnecting,
-  setReconnecting
-} from '../store/slices/connectionSlice';
-import { setKpisSnapshot } from '../store/slices/kpisSlice';
+import { appStore } from '../store';
 import { applyTickDeltaToStore } from '../store/services/applyTickDelta';
 import { Dashboard } from './Dashboard';
 
 const RECONNECT_DELAY_MS = 1_500;
 
 export const App = (): JSX.Element => {
-  const dispatch = useAppDispatch();
-
   useEffect(() => {
     let active = true;
     let closeStream: (() => void) | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let currentTick = 0;
+    const { actions } = appStore.getState();
 
     const connect = (sinceTick?: number): void => {
       closeStream = connectUnitStream({
@@ -31,14 +22,14 @@ export const App = (): JSX.Element => {
           if (!active) {
             return;
           }
-          dispatch(setConnected({ at: serverTime }));
+          actions.setConnected({ at: serverTime });
         },
         onTickDelta: (delta) => {
           if (!active) {
             return;
           }
           currentTick = Math.max(currentTick, delta.tickNumber);
-          applyTickDeltaToStore(dispatch, delta);
+          applyTickDeltaToStore(delta);
         },
         onHeartbeat: () => {
           // TODO: expose heartbeat metrics in dedicated monitoring panel if needed.
@@ -53,8 +44,8 @@ export const App = (): JSX.Element => {
             closeStream = null;
           }
 
-          dispatch(setConnectionError({ message: error.message }));
-          dispatch(setReconnecting());
+          actions.setConnectionError({ message: error.message });
+          actions.setReconnecting();
 
           if (reconnectTimer !== null) {
             clearTimeout(reconnectTimer);
@@ -70,7 +61,7 @@ export const App = (): JSX.Element => {
       });
     };
 
-    dispatch(setConnecting());
+    actions.setConnecting();
 
     void fetchInitialSnapshot()
       .then((snapshot) => {
@@ -80,25 +71,21 @@ export const App = (): JSX.Element => {
 
         currentTick = snapshot.tickNumber;
 
-        dispatch(
-          setSnapshotUnits({
-            units: snapshot.units,
-            tickNumber: snapshot.tickNumber
-          })
-        );
+        actions.setSnapshotUnits({
+          units: snapshot.units,
+          tickNumber: snapshot.tickNumber
+        });
 
-        dispatch(
-          setKpisSnapshot({
-            tickNumber: snapshot.tickNumber,
-            kpis: snapshot.kpis
-          })
-        );
+        actions.setKpisSnapshot({
+          tickNumber: snapshot.tickNumber,
+          kpis: snapshot.kpis
+        });
 
         connect(snapshot.tickNumber);
       })
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : 'Failed to load snapshot';
-        dispatch(setConnectionError({ message }));
+        actions.setConnectionError({ message });
       });
 
     return () => {
@@ -110,7 +97,7 @@ export const App = (): JSX.Element => {
         closeStream();
       }
     };
-  }, [dispatch]);
+  }, []);
 
   return <Dashboard />;
 };

@@ -1,4 +1,4 @@
-import { store } from '../store';
+import { appStore } from '../store';
 
 const PUBLISH_INTERVAL_MS = 500;
 const API_MEASURE_PREFIX = 'api:';
@@ -79,7 +79,7 @@ export class BrowserPerformanceMonitor {
     this.lastFrameAt = 0;
 
     this.frameId = requestAnimationFrame(this.onFrame);
-    this.unsubscribeStore = store.subscribe(this.onStoreUpdate);
+    this.unsubscribeStore = appStore.subscribe(this.onStoreUpdate);
     this.publishTimer = window.setInterval(this.publishSnapshot, this.intervalMs);
 
     this.observeMeasures();

@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { useAppSelector } from '../store/hooks';
+import { useAppStore } from '../store/hooks';
 
 export const EventFeed = (): JSX.Element => {
-  const events = useAppSelector((state) => state.eventsFeed.items);
+  const events = useAppStore((state) => state.eventsFeed.items);
   const visibleEvents = useMemo(() => events.slice(0, 60), [events]);
 
   return (

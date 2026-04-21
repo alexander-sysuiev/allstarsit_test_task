@@ -1,4 +1,4 @@
-import type { FiltersState } from '../store/slices/filtersSlice';
+import type { FiltersState } from '../store';
 import type { Unit, UnitStatus } from '../entities/units/types';
 
 export interface UnitListFilters {
