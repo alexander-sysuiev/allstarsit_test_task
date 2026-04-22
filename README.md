@@ -2,12 +2,12 @@
 
 ## Overview
 
-This project is a small full-stack battlefield simulation built for a take-home exercise.
+This project is a small full-stack battlefield simulation built as a take-home exercise.
 
-- `server`: Node.js + TypeScript service that owns the simulation, computes KPI snapshots, and streams tick deltas over SSE
-- `client`: React + TypeScript dashboard that renders 20,000 units, KPI cards, an event feed, a searchable virtualized unit list, and a browser-side performance panel
+- `server`: Node.js + TypeScript simulation service with snapshot and SSE endpoints
+- `client`: React + TypeScript dashboard that renders 20,000 units, KPI cards, a tactical map, a virtualized units panel, an event feed, and a lightweight browser performance panel
 
-The main design goal is to handle a large live unit set with simple, explainable architecture.
+The main goal is to handle a large live dataset with architecture that is easy to explain in a review call.
 
 ## Setup
 
@@ -24,9 +24,21 @@ From the repo root:
 npm install
 ```
 
+### Configure the client
+
+Create a local env file from the example:
+
+```bash
+cp client/.env.example client/.env
+```
+
+Current client envs:
+
+- `VITE_API_BASE_URL`: base URL for the server API and SSE stream
+
 ## Run Locally
 
-### Run both apps together
+### Run both apps
 
 ```bash
 npm run dev
@@ -35,7 +47,7 @@ npm run dev
 This starts:
 
 - server on `http://localhost:4000`
-- client on the Vite dev server, typically `http://localhost:5173`
+- client on `http://localhost:5173`
 
 ### Run apps separately
 
@@ -81,122 +93,142 @@ npm run build
 
 ### Server
 
-- The server keeps the battlefield state in memory inside a single simulation service.
-- Each tick mutates only a subset of units, computes updated KPIs, and emits a delta payload.
-- Query validation is explicit and isolated in transport helpers rather than being inlined in route handlers.
+- The simulation is owned by a single in-memory `UnitSimulationService`.
+- The server exposes:
+  - `GET /api/snapshot` for the initial full state
+  - `GET /api/stream` for live tick deltas over SSE
+- Each tick mutates only a subset of units and emits:
+  - changed unit patches
+  - recent battle events
+  - recalculated KPIs
+- Query validation is isolated in transport helpers with `zod`.
 
-This keeps the server easy to reason about in a review call: one simulation loop, one snapshot endpoint, one stream endpoint.
+This keeps the backend simple: one simulation loop, one snapshot endpoint, one stream endpoint.
 
 ### Client
 
-- The client fetches one initial snapshot, then applies field-level unit patches from the stream.
-- Units are stored in a normalized Redux entity store so updates target ids directly.
-- The tactical map is isolated from React’s normal render path and draws imperatively to a single canvas.
-- The unit list owns its own filtering and virtualization so large list work does not interfere with map rendering.
-- The performance panel is isolated from application state and uses browser APIs directly.
+- The client fetches one snapshot, then stays synchronized via SSE deltas.
+- State is stored in a normalized Zustand store, so patch application updates units by id instead of replacing large arrays.
+- The tactical map is rendered on a single canvas and updated outside React’s normal list rendering path.
+- The units panel does its own memoized filtering and virtualization so it does not render thousands of rows directly.
+- The performance panel is isolated from app state and samples browser APIs on its own cadence.
 
-The theme across the client is to keep React responsible for layout and controls, and keep hot rendering paths outside of large React tree updates.
+The general pattern is: React handles layout and UI composition, while hot update paths stay imperative and narrow.
+
+## Simulation Behavior
+
+The simulation intentionally favors simple rules over realism.
+
+- Units spawn with unique coordinates.
+- Movement is random and bounded by world limits.
+- `MAX_STEP` is shared as:
+  - the maximum random movement distance
+  - the maximum attack range
+- Attacks target the closest alive enemy within attack range.
+- If no enemy is in range, the unit falls back to idle for that tick.
+- Coordinates are occupancy-protected: two units cannot share the same `x,y`.
+- Zone control is derived from alive-unit counts per zone.
+
+These rules are small enough to reason about quickly, while still producing a live, changing battlefield.
 
 ## Why SSE
 
 SSE is a good fit here because the data flow is one-way: server to client.
 
-- The client does not need to send realtime commands back to the server.
-- SSE is simpler to implement and debug than WebSockets for this shape of problem.
-- It maps naturally to ordered event delivery such as `ready`, `tick.delta`, and `heartbeat`.
-- Reconnect behavior is straightforward, and the server can replay recent missed ticks using `sinceTick`.
+- The dashboard only needs live pushes from the server.
+- `EventSource` is built into the browser and keeps the client small.
+- Ordering is natural for events like `ready` and `tick.delta`.
+- Reconnect behavior is straightforward.
+- The server can replay missed ticks with `sinceTick` from a bounded in-memory history.
 
-If this project required bidirectional gameplay commands or higher-frequency binary transport, WebSockets would be a stronger candidate. For this dashboard, SSE keeps the transport simple.
+If the system needed bidirectional commands, binary payloads, or much tighter realtime interaction, WebSockets would be the better next option. For this dashboard, SSE is the simpler tool.
 
 ## Why Canvas
 
-The map must render 20,000 live unit markers.
+The tactical map needs to show 20,000 live unit markers.
 
-- Rendering 20,000 DOM nodes would add too much layout, style, and reconciliation overhead.
-- SVG would also become expensive at that node count under frequent updates.
-- A single canvas keeps the render surface flat and predictable.
-- Drawing is scheduled with `requestAnimationFrame`, which lets rendering align with the browser’s frame loop.
+- Rendering 20,000 DOM nodes would create unnecessary reconciliation and layout overhead.
+- SVG would still mean one element per marker, which is expensive under frequent updates.
+- A single canvas keeps the render surface flat.
+- Drawing is scheduled with `requestAnimationFrame`, which aligns rendering with the browser frame loop.
 
-React still mounts the canvas element, but the actual draw loop is separated into an imperative renderer to avoid expensive rerenders for every tick.
+React mounts the canvas, but the draw logic lives in a separate renderer so unit updates do not trigger large React rerenders.
 
 ## Delta Synchronization
 
-Synchronization is snapshot + delta based.
+Synchronization is snapshot plus delta based.
 
-1. The client fetches `/api/snapshot` once at startup.
-2. The server returns the full unit set and current KPI snapshot.
-3. The client opens an SSE connection to `/api/stream`.
-4. On each tick, the server sends only changed units plus events and KPI data.
-5. The client applies incoming field-level patches to existing normalized entities.
+1. The client fetches `/api/snapshot`.
+2. The server returns the full unit set, current KPIs, and the current `tickNumber`.
+3. The client opens `/api/stream?sinceTick=...`.
+4. On each tick, the server sends only the changed units plus events and KPI data.
+5. The client applies those patches into the existing normalized store.
 
-Why this approach:
+This avoids resending all 20,000 units every second.
 
-- Full snapshots every tick would be wasteful for 20,000 units.
-- Most units do not change on a given tick.
-- Patch application is cheap, testable, and keeps payload size bounded.
-
-The stream endpoint also accepts `sinceTick`, which allows replay of recent tick history after reconnects instead of forcing a full reload immediately.
+The stream endpoint accepts `sinceTick`, and the server keeps a bounded recent tick history. That lets the client reconnect and catch up after short disconnects without forcing a full snapshot every time.
 
 ## Performance Metrics
 
-The performance panel intentionally uses browser APIs rather than Redux-driven app metrics.
+The performance panel uses browser APIs directly rather than storing diagnostics in app state.
 
 Collected metrics:
 
-- FPS and average frame time via `requestAnimationFrame`
-- JavaScript heap usage via `performance.memory` when available
+- FPS via `requestAnimationFrame`
+- average frame time via `requestAnimationFrame`
+- JS heap usage via `performance.memory` when available
 - API latency via `PerformanceObserver` and browser performance entries
-- long-task counts via `PerformanceObserver`
-- store update rate via a lightweight `store.subscribe` counter
 
-Important implementation detail:
+Implementation details:
 
-- metrics are aggregated in an internal monitor object
-- the panel publishes UI updates at a low frequency instead of every frame
-- the rest of the app does not rerender when the panel samples metrics
+- metrics are aggregated in an internal collector
+- UI updates are published at a low frequency
+- the panel rerenders in isolation from the rest of the dashboard
 
-This keeps the monitoring overhead low and avoids turning the diagnostics panel into the source of the performance problem.
+This keeps the diagnostics useful without turning the monitoring UI into its own performance problem.
 
 ## Trade-offs And Known Limitations
 
-- The simulation is in-memory and single-process. It is fine for a take-home, but not durable or horizontally scalable.
-- SSE replay uses a bounded in-memory history window, so long disconnects may require a fresh snapshot.
-- The map redraws the full visible scene each frame request rather than using dirty-region rendering. That keeps the implementation simple, but it is not the most optimized possible approach.
-- `performance.memory` is browser-specific and not universally available, so heap metrics degrade to `n/a`.
-- The event feed keeps a bounded recent history and intentionally drops non-combat event types from the UI.
-- The current server tick loop uses `setInterval`, which is simple but not precise enough for stricter simulation timing requirements.
+- The simulation is in-memory and single-process. It is not durable and is not meant for horizontal scale.
+- SSE replay uses a bounded in-memory tick history, so a long disconnect can still require a fresh snapshot.
+- Canvas redraws the whole scene when the map updates. That is simple and adequate here, but not the most optimized possible approach.
+- `performance.memory` is browser-specific, so heap metrics degrade to `n/a` where unsupported.
+- The legend is currently static presentation, not a functional map filter.
+- The simulation uses `setInterval`, which is simple but not ideal for tighter timing guarantees.
+- Targeting is based on Euclidean distance and attack range only. There is no pathfinding, line-of-sight, or terrain logic.
 
 ## What I Would Improve Next For Production
 
-- Add integration tests around SSE replay, reconnect behavior, and snapshot/delta consistency.
-- Move simulation timing and tick scheduling to a more explicit loop with drift handling.
-- Add structured logging, health metrics, and basic tracing around snapshot fetches and stream lifecycle.
-- Introduce backpressure and load-shedding strategies for slow clients.
-- Split shared battlefield types into a common package to remove duplication between server and client.
-- Add user-facing filter controls for the map, not just the units panel.
-- Add deployment configuration, environment-based URLs, and containerization.
-- Revisit the map renderer for partial redraws or worker/offscreen-canvas support if profiling showed the canvas becoming the next bottleneck.
+- Add integration coverage for snapshot/stream consistency and reconnect replay behavior.
+- Add a forced resync path when a reconnect falls outside the retained tick-history window.
+- Move shared domain types into a common package instead of duplicating them between client and server.
+- Add structured logs and operational metrics around stream lifecycle and tick throughput.
+- Introduce a more explicit simulation loop with drift handling instead of plain `setInterval`.
+- Make legend controls functional map filters rather than static UI.
+- Revisit the map renderer for offscreen canvas or worker-based rendering if profiling showed canvas work becoming the next bottleneck.
 
 ## Project Structure
 
 ```text
 server/
   src/
-    app.ts
-    services/unitSimulationService.ts
-    transport/
+    config/
     domain/
+    errors/
+    middleware/
+    services/
+    transport/
+  tests/
 
 client/
   src/
-    app/
-    entities/units/
-    features/map/
-    features/unit-list/
-    features/events/
-    features/kpis/
-    features/performance/
+    components/
+    entities/
+    lib/
     store/
+    styles/
+    utils/
+  tests/
 ```
 
-The structure is intentionally flat and feature-oriented. The project is small enough that a deeper abstraction stack would make it harder, not easier, to explain.
+The structure is intentionally shallow. The codebase is small enough that adding more abstraction layers would make it harder to explain, not easier.
