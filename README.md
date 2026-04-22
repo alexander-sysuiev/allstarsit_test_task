@@ -177,7 +177,7 @@ Collected metrics:
 - FPS via `requestAnimationFrame`
 - average frame time via `requestAnimationFrame`
 - JS heap usage via `performance.memory` when available
-- tick delivery latency computed from `Date.now() - delta.serverTime`
+- API latency computed from `Date.now() - delta.serverTime`
 
 Implementation details:
 
@@ -203,8 +203,6 @@ This keeps the diagnostics useful without turning the monitoring UI into its own
 - Add a forced resync path when a reconnect falls outside the retained tick-history window.
 - Move shared domain types into a common package instead of duplicating them between client and server.
 - Add structured logs and operational metrics around stream lifecycle and tick throughput.
-- Introduce a more explicit simulation loop with drift handling instead of plain `setInterval`.
-- Make legend controls functional map filters rather than static UI.
 - Revisit the map renderer for offscreen canvas or worker-based rendering if profiling showed canvas work becoming the next bottleneck.
 
 ## Project Structure

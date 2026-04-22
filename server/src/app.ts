@@ -8,6 +8,7 @@ import { UnitSimulationService } from './services/unitSimulationService.js';
 import { SseBroadcaster } from './transport/sseBroadcaster.js';
 import type { TickDelta } from './domain/domain.types.js';
 import { parseEmptyQuery, parseStreamQuery } from './transport/queryParams.js';
+import { createSimulationLoop } from './utils/simulationLoop.js';
 
 const HEARTBEAT_MS = 15_000;
 const MAX_TICK_HISTORY = 300;
@@ -31,7 +32,9 @@ export const createAppRuntime = (options: AppRuntimeOptions = {}): AppRuntime =>
   const simulation = new UnitSimulationService(initialSnapshot.units);
   const broadcaster = new SseBroadcaster();
   const tickHistory: TickDelta[] = [];
-  let tickTimer: ReturnType<typeof setInterval> | null = null;
+  const tickLoop = createSimulationLoop(tickMs, () => {
+    runTick();
+  });
 
   const runTick = (): TickDelta => {
     const tick = simulation.tick();
@@ -114,7 +117,7 @@ export const createAppRuntime = (options: AppRuntimeOptions = {}): AppRuntime =>
   );
 
   if (autoTick) {
-    tickTimer = setInterval(runTick, tickMs);
+    tickLoop.start();
   }
 
   app.use(notFoundMiddleware);
@@ -124,10 +127,7 @@ export const createAppRuntime = (options: AppRuntimeOptions = {}): AppRuntime =>
     app,
     runTick,
     dispose: () => {
-      if (tickTimer !== null) {
-        clearInterval(tickTimer);
-        tickTimer = null;
-      }
+      tickLoop.stop();
     }
   };
 };
