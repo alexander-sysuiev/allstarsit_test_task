@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { MAX_STEP } from '../../src/config/constants.js';
 import type { Unit } from '../../src/domain/battlefield.types.js';
 import { UnitSimulationService } from '../../src/services/unitSimulationService.js';
 
@@ -72,4 +73,76 @@ test('constructor rejects overlapping starting positions', () => {
   ];
 
   assert.throws(() => new UnitSimulationService(units), /duplicate unit position/);
+});
+
+test('pickEnemyTarget selects the closest alive enemy within attack range', () => {
+  const attacker: Unit = {
+    ...createUnit(0),
+    team: 'red',
+    x: 10,
+    y: 10
+  };
+  const nearEnemy: Unit = {
+    ...createUnit(1),
+    team: 'blue',
+    x: 10 + Math.floor(MAX_STEP / 2),
+    y: 10
+  };
+  const farEnemy: Unit = {
+    ...createUnit(2),
+    id: 'unit-far',
+    name: 'Unit-far',
+    team: 'blue',
+    x: 10 + MAX_STEP + 5,
+    y: 10
+  };
+  const sameTeam: Unit = {
+    ...createUnit(3),
+    team: 'red',
+    x: 11,
+    y: 11
+  };
+  const deadEnemy: Unit = {
+    ...createUnit(4),
+    id: 'unit-dead',
+    name: 'Unit-dead',
+    team: 'blue',
+    x: 12,
+    y: 12,
+    alive: false,
+    status: 'dead'
+  };
+
+  const simulation = new UnitSimulationService([attacker, nearEnemy, farEnemy, sameTeam, deadEnemy]);
+  const target = (
+    simulation as unknown as {
+      pickEnemyTarget: (unit: Unit, actorIds: string[]) => Unit | undefined;
+    }
+  ).pickEnemyTarget(attacker, [attacker.id, farEnemy.id, sameTeam.id, deadEnemy.id, nearEnemy.id]);
+
+  assert.equal(target?.id, nearEnemy.id);
+});
+
+test('pickEnemyTarget returns undefined when no enemy is within attack range', () => {
+  const attacker: Unit = {
+    ...createUnit(0),
+    team: 'red',
+    x: 10,
+    y: 10
+  };
+  const farEnemy: Unit = {
+    ...createUnit(1),
+    team: 'blue',
+    x: 10 + MAX_STEP + 1,
+    y: 10
+  };
+
+  const simulation = new UnitSimulationService([attacker, farEnemy]);
+  const target = (
+    simulation as unknown as {
+      pickEnemyTarget: (unit: Unit, actorIds: string[]) => Unit | undefined;
+    }
+  ).pickEnemyTarget(attacker, [attacker.id, farEnemy.id]);
+
+  assert.equal(target, undefined);
 });

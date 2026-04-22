@@ -1,5 +1,6 @@
 import {
   MAX_CHANGED_UNITS_PER_TICK,
+  MAX_STEP,
   MIN_CHANGED_UNITS_PER_TICK,
   WORLD_HEIGHT,
   WORLD_WIDTH
@@ -159,21 +160,37 @@ export class UnitSimulationService {
   }
 
   private pickEnemyTarget(attacker: Unit, actorIds: string[]): Unit | undefined {
-    for (let i = 0; i < 10; i += 1) {
-      const randomActorId = actorIds[Math.floor(Math.random() * actorIds.length)];
-      if (!randomActorId || randomActorId === attacker.id) {
+    let closestTarget: Unit | undefined;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    for (const actorId of actorIds) {
+      if (!actorId || actorId === attacker.id) {
         continue;
       }
 
-      const candidate = this.unitsById.get(randomActorId);
+      const candidate = this.unitsById.get(actorId);
       if (!candidate || !candidate.alive || candidate.team === attacker.team) {
         continue;
       }
 
-      return candidate;
+      const distance = this.getMovementDistance(attacker, candidate);
+      if (distance > MAX_STEP) {
+        continue;
+      }
+
+      if (distance < closestDistance) {
+        closestTarget = candidate;
+        closestDistance = distance;
+      }
     }
 
-    return undefined;
+    return closestTarget;
+  }
+
+  private getMovementDistance(from: Unit, to: Unit): number {
+    const deltaX = from.x - to.x;
+    const deltaY = from.y - to.y;
+    return Math.hypot(deltaX, deltaY);
   }
 
   private applySimpleAction(

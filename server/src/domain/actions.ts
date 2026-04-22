@@ -1,7 +1,7 @@
+import { MAX_STEP } from '../config/constants.js';
 import type { BattleEvent, MapBounds, Unit } from './battlefield.types.js';
 import { clampToBounds, resolveZone } from './zones.js';
 
-const MAX_STEP = 20;
 const MAX_ATTACK_DAMAGE = 12;
 const MAX_HEAL = 8;
 
