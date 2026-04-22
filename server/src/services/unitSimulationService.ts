@@ -1,11 +1,8 @@
 import {
   MAX_CHANGED_UNITS_PER_TICK,
-  MAX_STEP,
   MIN_CHANGED_UNITS_PER_TICK,
-  WORLD_HEIGHT,
-  WORLD_WIDTH
 } from '../config/constants.js';
-import { randomAttack, randomHealing, randomIdle, randomMovement, type SimpleActionResult } from '../domain/actions.js';
+import { randomHealing, type SimpleActionResult } from '../domain/actions.js';
 import { computeBattlefieldKpis } from '../domain/kpis.js';
 import { toPositionKey } from '../domain/positions.js';
 import type {
@@ -17,6 +14,9 @@ import type {
   Zone,
   ZoneControl
 } from '../domain/battlefield.types.js';
+import { resolveAttackAction } from './attackActionService.js';
+import { resolveIdleAction } from './idleActionService.js';
+import { resolveMoveAction } from './moveActionService.js';
 
 const ACTIVE_UNIT_STATUSES = new Set<Unit['status']>(['idle', 'moving', 'attacking', 'healing']);
 
@@ -75,44 +75,36 @@ export class UnitSimulationService {
       const roll = Math.random();
 
       if (roll < 0.45) {
-        const proposedResult = randomMovement(actor, { width: WORLD_WIDTH, height: WORLD_HEIGHT });
-        const nextX = proposedResult.changes.x ?? actor.x;
-        const nextY = proposedResult.changes.y ?? actor.y;
-        const result = this.isPositionOccupiedByAnotherUnit(actor.id, nextX, nextY)
-          ? randomIdle(actor)
-          : proposedResult;
-
-        this.applySimpleAction(actor.id, result, changedUnitsById, events, serverTime);
+        const resolution = resolveMoveAction(actor, this.unitIdByPosition);
+        this.applySimpleAction(actor.id, resolution, changedUnitsById, events, serverTime);
         continue;
       }
 
       if (roll < 0.72) {
-        const target = this.pickEnemyTarget(actor, actorIds);
-        if (!target) {
-          const result = randomIdle(actor);
-          this.applySimpleAction(actor.id, result, changedUnitsById, events, serverTime);
+        const candidates = this.getTargetCandidates(actorIds);
+        const resolution = resolveAttackAction(actor, candidates);
+
+        if (resolution.kind === 'idle') {
+          this.applySimpleAction(actor.id, resolution.result, changedUnitsById, events, serverTime);
           continue;
         }
 
-        const attackResult = randomAttack(actor, target);
-
-        this.applyUnitChanges(actor.id, attackResult.attackerChanges, changedUnitsById);
-        this.applyUnitChanges(target.id, attackResult.targetChanges, changedUnitsById);
-
-        for (const event of attackResult.events) {
+        this.applyUnitChanges(actor.id, resolution.result.attackerChanges, changedUnitsById);
+        this.applyUnitChanges(resolution.targetId, resolution.result.targetChanges, changedUnitsById);
+        for (const event of resolution.result.events) {
           events.push(this.withTickContext(event, serverTime));
         }
         continue;
       }
 
       if (roll < 0.9 && actor.health < 100) {
-        const result = randomHealing(actor);
-        this.applySimpleAction(actor.id, result, changedUnitsById, events, serverTime);
+        const resolution = randomHealing(actor);
+        this.applySimpleAction(actor.id, resolution, changedUnitsById, events, serverTime);
         continue;
       }
 
-      const result = randomIdle(actor);
-      this.applySimpleAction(actor.id, result, changedUnitsById, events, serverTime);
+      const resolution = resolveIdleAction(actor);
+      this.applySimpleAction(actor.id, resolution, changedUnitsById, events, serverTime);
     }
 
     const units = this.getSnapshot();
@@ -159,38 +151,10 @@ export class UnitSimulationService {
     return Array.from(selectedIds);
   }
 
-  private pickEnemyTarget(attacker: Unit, actorIds: string[]): Unit | undefined {
-    let closestTarget: Unit | undefined;
-    let closestDistance = Number.POSITIVE_INFINITY;
-
-    for (const actorId of actorIds) {
-      if (!actorId || actorId === attacker.id) {
-        continue;
-      }
-
-      const candidate = this.unitsById.get(actorId);
-      if (!candidate || !candidate.alive || candidate.team === attacker.team) {
-        continue;
-      }
-
-      const distance = this.getMovementDistance(attacker, candidate);
-      if (distance > MAX_STEP) {
-        continue;
-      }
-
-      if (distance < closestDistance) {
-        closestTarget = candidate;
-        closestDistance = distance;
-      }
-    }
-
-    return closestTarget;
-  }
-
-  private getMovementDistance(from: Unit, to: Unit): number {
-    const deltaX = from.x - to.x;
-    const deltaY = from.y - to.y;
-    return Math.hypot(deltaX, deltaY);
+  private getTargetCandidates(actorIds: string[]): Unit[] {
+    return actorIds
+      .map((candidateId) => this.unitsById.get(candidateId))
+      .filter((candidate): candidate is Unit => candidate !== undefined);
   }
 
   private applySimpleAction(
@@ -289,11 +253,6 @@ export class UnitSimulationService {
         ...changes
       }
     });
-  }
-
-  private isPositionOccupiedByAnotherUnit(unitId: string, x: number, y: number): boolean {
-    const occupantId = this.unitIdByPosition.get(toPositionKey(x, y));
-    return occupantId !== undefined && occupantId !== unitId;
   }
 
   private withTickContext(event: Omit<BattleEvent, 'tickNumber' | 'serverTime'>, serverTime: number): BattleEvent {

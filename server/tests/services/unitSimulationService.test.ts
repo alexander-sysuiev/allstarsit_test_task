@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { MAX_STEP } from '../../src/config/constants.js';
 import type { Unit } from '../../src/domain/battlefield.types.js';
+import { resolveAttackAction } from '../../src/services/attackActionService.js';
 import { UnitSimulationService } from '../../src/services/unitSimulationService.js';
 
 const createUnit = (index: number): Unit => ({
@@ -75,7 +76,7 @@ test('constructor rejects overlapping starting positions', () => {
   assert.throws(() => new UnitSimulationService(units), /duplicate unit position/);
 });
 
-test('pickEnemyTarget selects the closest alive enemy within attack range', () => {
+test('resolveAttackAction selects the closest alive enemy within attack range', () => {
   const attacker: Unit = {
     ...createUnit(0),
     team: 'red',
@@ -113,17 +114,15 @@ test('pickEnemyTarget selects the closest alive enemy within attack range', () =
     status: 'dead'
   };
 
-  const simulation = new UnitSimulationService([attacker, nearEnemy, farEnemy, sameTeam, deadEnemy]);
-  const target = (
-    simulation as unknown as {
-      pickEnemyTarget: (unit: Unit, actorIds: string[]) => Unit | undefined;
-    }
-  ).pickEnemyTarget(attacker, [attacker.id, farEnemy.id, sameTeam.id, deadEnemy.id, nearEnemy.id]);
+  const resolution = resolveAttackAction(attacker, [attacker, farEnemy, sameTeam, deadEnemy, nearEnemy]);
 
-  assert.equal(target?.id, nearEnemy.id);
+  assert.equal(resolution.kind, 'attack');
+  if (resolution.kind === 'attack') {
+    assert.equal(resolution.targetId, nearEnemy.id);
+  }
 });
 
-test('pickEnemyTarget returns undefined when no enemy is within attack range', () => {
+test('resolveAttackAction falls back to idle when no enemy is within attack range', () => {
   const attacker: Unit = {
     ...createUnit(0),
     team: 'red',
@@ -137,12 +136,7 @@ test('pickEnemyTarget returns undefined when no enemy is within attack range', (
     y: 10
   };
 
-  const simulation = new UnitSimulationService([attacker, farEnemy]);
-  const target = (
-    simulation as unknown as {
-      pickEnemyTarget: (unit: Unit, actorIds: string[]) => Unit | undefined;
-    }
-  ).pickEnemyTarget(attacker, [attacker.id, farEnemy.id]);
+  const resolution = resolveAttackAction(attacker, [attacker, farEnemy]);
 
-  assert.equal(target, undefined);
+  assert.equal(resolution.kind, 'idle');
 });
