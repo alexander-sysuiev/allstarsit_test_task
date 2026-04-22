@@ -1,5 +1,4 @@
 const PUBLISH_INTERVAL_MS = 500;
-const API_MEASURE_PREFIX = 'api:';
 
 type MemoryPerformance = Performance & {
   memory?: {
@@ -13,21 +12,26 @@ export interface PerformanceSnapshot {
   fps: number;
   frameTimeMs: number;
   heapUsedMb: number | null;
-  apiLatencyMs: number | null;
+  tickDeliveryLatencyMs: number | null;
 }
 
 interface PublishStats {
   frameCount: number;
   frameTimeSum: number;
-  latestApiLatencyMs: number | null;
 }
+
+let latestTickDeliveryLatencyMs: number | null = null;
 
 const initialSnapshot = (): PerformanceSnapshot => ({
   fps: 0,
   frameTimeMs: 0,
   heapUsedMb: null,
-  apiLatencyMs: null
+  tickDeliveryLatencyMs: null
 });
+
+export const recordTickDeliveryLatency = (serverTime: number): void => {
+  latestTickDeliveryLatencyMs = Math.max(0, Date.now() - serverTime);
+};
 
 export class BrowserPerformanceMonitor {
   private readonly publish: (snapshot: PerformanceSnapshot) => void;
@@ -39,11 +43,8 @@ export class BrowserPerformanceMonitor {
   private lastPublishAt = 0;
   private publishStats: PublishStats = {
     frameCount: 0,
-    frameTimeSum: 0,
-    latestApiLatencyMs: null
+    frameTimeSum: 0
   };
-  private resourceObserver: PerformanceObserver | null = null;
-  private measureObserver: PerformanceObserver | null = null;
 
   constructor(publish: (snapshot: PerformanceSnapshot) => void, intervalMs = PUBLISH_INTERVAL_MS) {
     this.publish = publish;
@@ -60,9 +61,6 @@ export class BrowserPerformanceMonitor {
 
     this.frameId = requestAnimationFrame(this.onFrame);
     this.publishTimer = window.setInterval(this.publishSnapshot, this.intervalMs);
-
-    this.observeMeasures();
-    this.observeResources();
     this.publish(initialSnapshot());
   }
 
@@ -76,9 +74,6 @@ export class BrowserPerformanceMonitor {
       window.clearInterval(this.publishTimer);
       this.publishTimer = null;
     }
-
-    this.resourceObserver?.disconnect();
-    this.measureObserver?.disconnect();
   }
 
   private readonly onFrame = (now: number): void => {
@@ -89,14 +84,6 @@ export class BrowserPerformanceMonitor {
 
     this.lastFrameAt = now;
     this.frameId = requestAnimationFrame(this.onFrame);
-  };
-
-  private readonly onApiEntry = (duration: number): void => {
-    if (duration <= 0) {
-      return;
-    }
-
-    this.publishStats.latestApiLatencyMs = duration;
   };
 
   private readonly publishSnapshot = (): void => {
@@ -113,48 +100,10 @@ export class BrowserPerformanceMonitor {
       fps,
       frameTimeMs,
       heapUsedMb: memory ? memory.usedJSHeapSize / (1024 * 1024) : null,
-      apiLatencyMs: this.publishStats.latestApiLatencyMs
+      tickDeliveryLatencyMs: latestTickDeliveryLatencyMs
     });
 
     this.publishStats.frameCount = 0;
     this.publishStats.frameTimeSum = 0;
   };
-
-  private observeMeasures(): void {
-    if (typeof PerformanceObserver === 'undefined') {
-      return;
-    }
-
-    this.measureObserver = new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        if (entry.name.startsWith(API_MEASURE_PREFIX)) {
-          this.onApiEntry(entry.duration);
-        }
-      }
-    });
-
-    this.measureObserver.observe({ type: 'measure', buffered: true });
-  }
-
-  private observeResources(): void {
-    if (typeof PerformanceObserver === 'undefined') {
-      return;
-    }
-
-    this.resourceObserver = new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        if (entry.entryType !== 'resource') {
-          continue;
-        }
-
-        if (!entry.name.includes('/api/')) {
-          continue;
-        }
-
-        this.onApiEntry(entry.duration);
-      }
-    });
-
-    this.resourceObserver.observe({ type: 'resource', buffered: true });
-  }
 }

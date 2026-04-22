@@ -3,6 +3,7 @@ import { fetchInitialSnapshot } from '../lib/api';
 import { connectUnitStream } from '../lib/sse';
 import { appStore } from '../store';
 import { applyTickDeltaToStore } from '../store/services/applyTickDelta';
+import { recordTickDeliveryLatency } from '../utils/browserPerformance';
 import { Dashboard } from './Dashboard';
 
 const RECONNECT_DELAY_MS = 1_500;
@@ -28,6 +29,7 @@ export const App = (): JSX.Element => {
           if (!active) {
             return;
           }
+          recordTickDeliveryLatency(delta.serverTime);
           currentTick = Math.max(currentTick, delta.tickNumber);
           applyTickDeltaToStore(delta);
         },

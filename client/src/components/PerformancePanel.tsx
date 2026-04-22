@@ -5,7 +5,7 @@ const EMPTY_SNAPSHOT: PerformanceSnapshot = {
   fps: 0,
   frameTimeMs: 0,
   heapUsedMb: null,
-  apiLatencyMs: null
+  tickDeliveryLatencyMs: null
 };
 
 const formatMs = (value: number | null): string => {
@@ -72,7 +72,7 @@ const PerformancePanelComponent = (): JSX.Element => {
               <span className="sketch-box" />
               <div>
                 <span className="performance-label">API latency</span>
-                <strong>{formatMs(snapshot.apiLatencyMs)}</strong>
+                <strong>{formatMs(snapshot.tickDeliveryLatencyMs)}</strong>
               </div>
             </div>
           </div>

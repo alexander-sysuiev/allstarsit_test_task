@@ -177,7 +177,7 @@ Collected metrics:
 - FPS via `requestAnimationFrame`
 - average frame time via `requestAnimationFrame`
 - JS heap usage via `performance.memory` when available
-- API latency via `PerformanceObserver` and browser performance entries
+- tick delivery latency computed from `Date.now() - delta.serverTime`
 
 Implementation details:
 
@@ -199,6 +199,7 @@ This keeps the diagnostics useful without turning the monitoring UI into its own
 
 ## What I Would Improve Next For Production
 
+- Add richer stream observability such as reconnect latency, replay catch-up time, and dropped-update detection.
 - Add a forced resync path when a reconnect falls outside the retained tick-history window.
 - Move shared domain types into a common package instead of duplicating them between client and server.
 - Add structured logs and operational metrics around stream lifecycle and tick throughput.
@@ -217,6 +218,7 @@ server/
     middleware/
     services/
     transport/
+    utils/
   tests/
 
 client/
