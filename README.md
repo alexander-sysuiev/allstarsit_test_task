@@ -199,7 +199,6 @@ This keeps the diagnostics useful without turning the monitoring UI into its own
 
 ## What I Would Improve Next For Production
 
-- Add integration coverage for snapshot/stream consistency and reconnect replay behavior.
 - Add a forced resync path when a reconnect falls outside the retained tick-history window.
 - Move shared domain types into a common package instead of duplicating them between client and server.
 - Add structured logs and operational metrics around stream lifecycle and tick throughput.

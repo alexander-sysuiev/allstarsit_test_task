@@ -11,6 +11,18 @@ import { parseEmptyQuery, parseStreamQuery } from './transport/queryParams.js';
 const HEARTBEAT_MS = 15_000;
 const MAX_TICK_HISTORY = 300;
 
+interface AppRuntimeOptions {
+  autoTick?: boolean;
+  tickMs?: number;
+  heartbeatMs?: number;
+}
+
+export interface AppRuntime {
+  app: ReturnType<typeof express>;
+  runTick: () => TickDelta;
+  dispose: () => void;
+}
+
 const asyncRoute = (
   handler: (req: Request, res: Response, next: NextFunction) => Promise<void> | void
 ) => {
@@ -19,12 +31,30 @@ const asyncRoute = (
   };
 };
 
-export const createApp = () => {
+export const createAppRuntime = (options: AppRuntimeOptions = {}): AppRuntime => {
+  const {
+    autoTick = true,
+    tickMs = TICK_MS,
+    heartbeatMs = HEARTBEAT_MS
+  } = options;
   const app = express();
   const initialSnapshot = createInitialSnapshot();
   const simulation = new UnitSimulationService(initialSnapshot.units);
   const broadcaster = new SseBroadcaster();
   const tickHistory: TickDelta[] = [];
+  let tickTimer: ReturnType<typeof setInterval> | null = null;
+
+  const runTick = (): TickDelta => {
+    const tick = simulation.tick();
+
+    tickHistory.push(tick);
+    if (tickHistory.length > MAX_TICK_HISTORY) {
+      tickHistory.shift();
+    }
+
+    broadcaster.send('tick.delta', tick);
+    return tick;
+  };
 
   app.use(cors());
   app.use(express.json());
@@ -84,7 +114,7 @@ export const createApp = () => {
 
       const heartbeat = setInterval(() => {
         broadcaster.sendTo(res, 'heartbeat', { serverTime: Date.now() });
-      }, HEARTBEAT_MS);
+      }, heartbeatMs);
 
       res.on('close', () => {
         clearInterval(heartbeat);
@@ -94,19 +124,25 @@ export const createApp = () => {
     })
   );
 
-  setInterval(() => {
-    const tick = simulation.tick();
-
-    tickHistory.push(tick);
-    if (tickHistory.length > MAX_TICK_HISTORY) {
-      tickHistory.shift();
-    }
-
-    broadcaster.send('tick.delta', tick);
-  }, TICK_MS);
+  if (autoTick) {
+    tickTimer = setInterval(runTick, tickMs);
+  }
 
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);
 
-  return app;
+  return {
+    app,
+    runTick,
+    dispose: () => {
+      if (tickTimer !== null) {
+        clearInterval(tickTimer);
+        tickTimer = null;
+      }
+    }
+  };
+};
+
+export const createApp = (): ReturnType<typeof express> => {
+  return createAppRuntime().app;
 };
