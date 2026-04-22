@@ -1,12 +1,11 @@
 import type { SnapshotResponse } from '../entities/units/types';
+import { SNAPSHOT_URL } from './env';
 import { markApiEnd, markApiStart, measureApiSpan } from './performanceMarks';
-
-const SERVER_BASE_URL = 'http://localhost:4000';
 
 export const fetchInitialSnapshot = async (): Promise<SnapshotResponse> => {
   const measureName = 'api:snapshot';
   const startMark = markApiStart(measureName);
-  const res = await fetch(`${SERVER_BASE_URL}/api/snapshot`);
+  const res = await fetch(SNAPSHOT_URL);
 
   if (!res.ok) {
     const endMark = markApiEnd(measureName);

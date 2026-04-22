@@ -31,9 +31,6 @@ export const App = (): JSX.Element => {
           currentTick = Math.max(currentTick, delta.tickNumber);
           applyTickDeltaToStore(delta);
         },
-        onHeartbeat: () => {
-          // TODO: expose heartbeat metrics in dedicated monitoring panel if needed.
-        },
         onError: (error) => {
           if (!active) {
             return;
