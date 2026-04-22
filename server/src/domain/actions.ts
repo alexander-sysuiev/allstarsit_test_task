@@ -1,22 +1,9 @@
 import { MAX_STEP } from '../config/constants.js';
-import type { BattleEvent, MapBounds, Unit } from './battlefield.types.js';
+import type { AttackActionResult, BattleEvent, MapBounds, SimpleActionResult, Unit } from './domain.types.js';
 import { clampToBounds, resolveZone } from './zones.js';
 
 const MAX_ATTACK_DAMAGE = 12;
 const MAX_HEAL = 8;
-
-type UnitChangeSet = Partial<Pick<Unit, 'x' | 'y' | 'health' | 'status' | 'alive' | 'zone'>>;
-
-export interface SimpleActionResult {
-  changes: UnitChangeSet;
-  event: Omit<BattleEvent, 'tickNumber' | 'serverTime'>;
-}
-
-export interface AttackActionResult {
-  attackerChanges: UnitChangeSet;
-  targetChanges: UnitChangeSet;
-  events: Array<Omit<BattleEvent, 'tickNumber' | 'serverTime'>>;
-}
 
 export const randomMovement = (unit: Unit, bounds: MapBounds): SimpleActionResult => {
   const x = clampToBounds(unit.x + randomStep(MAX_STEP), 0, bounds.width);

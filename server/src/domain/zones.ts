@@ -1,4 +1,4 @@
-import type { MapBounds, Team, Unit, Zone, ZoneControl } from './battlefield.types.js';
+import type { MapBounds, Team, Unit, Zone, ZoneControl } from './domain.types.js';
 
 export const ZONES: readonly Zone[] = ['north-west', 'north-east', 'south-west', 'south-east'];
 

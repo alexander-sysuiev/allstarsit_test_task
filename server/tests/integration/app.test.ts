@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import type { Socket } from 'node:net';
 import test from 'node:test';
-import { createAppRuntime, type AppRuntime } from '../../src/app.js';
-import type { InitialSnapshot, TickDelta, Unit } from '../../src/domain/battlefield.types.js';
+import { createAppRuntime } from '../../src/app.js';
+import type { AppRuntime } from '../../src/app.types.js';
+import type { InitialSnapshot, TickDelta, Unit } from '../../src/domain/domain.types.js';
 
 interface RunningServer {
   baseUrl: string;

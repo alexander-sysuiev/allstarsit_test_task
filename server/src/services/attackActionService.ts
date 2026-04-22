@@ -1,19 +1,7 @@
 import { MAX_STEP } from '../config/constants.js';
-import { randomAttack, randomIdle, type AttackActionResult, type SimpleActionResult } from '../domain/actions.js';
-import type { Unit } from '../domain/battlefield.types.js';
-
-interface IdleAttackResolution {
-  kind: 'idle';
-  result: SimpleActionResult;
-}
-
-interface SuccessfulAttackResolution {
-  kind: 'attack';
-  result: AttackActionResult;
-  targetId: string;
-}
-
-export type AttackResolution = IdleAttackResolution | SuccessfulAttackResolution;
+import type { AttackResolution } from './attackAction.types.js';
+import { randomAttack, randomIdle } from '../domain/actions.js';
+import type { Unit } from '../domain/domain.types.js';
 
 export const resolveAttackAction = (attacker: Unit, candidates: Unit[]): AttackResolution => {
   const target = pickClosestEnemyTarget(attacker, candidates);

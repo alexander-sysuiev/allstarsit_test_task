@@ -63,3 +63,16 @@ export interface MapBounds {
   width: number;
   height: number;
 }
+
+export type UnitChangeSet = Partial<Pick<Unit, 'x' | 'y' | 'health' | 'status' | 'alive' | 'zone'>>;
+
+export interface SimpleActionResult {
+  changes: UnitChangeSet;
+  event: Omit<BattleEvent, 'tickNumber' | 'serverTime'>;
+}
+
+export interface AttackActionResult {
+  attackerChanges: UnitChangeSet;
+  targetChanges: UnitChangeSet;
+  events: Array<Omit<BattleEvent, 'tickNumber' | 'serverTime'>>;
+}

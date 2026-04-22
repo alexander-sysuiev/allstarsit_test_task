@@ -2,18 +2,19 @@ import {
   MAX_CHANGED_UNITS_PER_TICK,
   MIN_CHANGED_UNITS_PER_TICK,
 } from '../config/constants.js';
-import { randomHealing, type SimpleActionResult } from '../domain/actions.js';
-import { computeBattlefieldKpis } from '../domain/kpis.js';
-import { toPositionKey } from '../domain/positions.js';
 import type {
   BattlefieldKpis,
   BattleEvent,
+  SimpleActionResult,
   TickDelta,
   Unit,
   UnitPatch,
   Zone,
   ZoneControl
-} from '../domain/battlefield.types.js';
+} from '../domain/domain.types.js';
+import { randomHealing } from '../domain/actions.js';
+import { computeBattlefieldKpis } from '../domain/kpis.js';
+import { toPositionKey } from '../utils/positions.js';
 import { resolveAttackAction } from './attackActionService.js';
 import { resolveIdleAction } from './idleActionService.js';
 import { resolveMoveAction } from './moveActionService.js';

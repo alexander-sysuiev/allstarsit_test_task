@@ -1,4 +1,4 @@
-import type { BattlefieldKpis, Unit } from './battlefield.types.js';
+import type { BattlefieldKpis, Unit } from './domain.types.js';
 import { calculateZoneControl } from './zones.js';
 
 export const computeBattlefieldKpis = (units: Unit[]): BattlefieldKpis => {

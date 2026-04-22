@@ -1,9 +1,8 @@
 import { WORLD_HEIGHT, WORLD_WIDTH } from '../config/constants.js';
-import { randomMovement, type SimpleActionResult } from '../domain/actions.js';
-import type { Unit } from '../domain/battlefield.types.js';
+import type { SimpleActionResult, Unit } from '../domain/domain.types.js';
+import { toPositionKey } from '../utils/positions.js';
+import { randomMovement } from '../domain/actions.js';
 import { resolveIdleAction } from './idleActionService.js';
-import { toPositionKey } from '../domain/positions.js';
-
 
 export const resolveMoveAction = (
   actor: Unit,

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { MAX_STEP } from '../../src/config/constants.js';
-import type { Unit } from '../../src/domain/battlefield.types.js';
+import type { Unit } from '../../src/domain/domain.types.js';
 import { resolveAttackAction } from '../../src/services/attackActionService.js';
 import { UnitSimulationService } from '../../src/services/unitSimulationService.js';
 

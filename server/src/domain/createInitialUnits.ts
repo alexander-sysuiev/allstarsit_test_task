@@ -1,7 +1,7 @@
 import { UNIT_COUNT, WORLD_HEIGHT, WORLD_WIDTH } from '../config/constants.js';
-import type { InitialSnapshot, Team, Unit } from './battlefield.types.js';
+import { toPositionKey } from '../utils/positions.js';
+import type { InitialSnapshot, Team, Unit } from './domain.types.js';
 import { computeBattlefieldKpis } from './kpis.js';
-import { toPositionKey } from './positions.js';
 import { resolveZone } from './zones.js';
 
 const validateHealth = (health: number): number => {

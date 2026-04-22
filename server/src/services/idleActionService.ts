@@ -1,5 +1,5 @@
-import { randomIdle, type SimpleActionResult } from '../domain/actions.js';
-import type { Unit } from '../domain/battlefield.types.js';
+import type { SimpleActionResult, Unit } from '../domain/domain.types.js';
+import { randomIdle } from '../domain/actions.js';
 
 export const resolveIdleAction = (unit: Unit): SimpleActionResult => {
   return randomIdle(unit);
