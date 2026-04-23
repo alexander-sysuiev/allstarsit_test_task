@@ -231,3 +231,10 @@ client/
 ```
 
 The structure is intentionally shallow. The codebase is small enough that adding more abstraction layers would make it harder to explain, not easier.
+
+## Result
+
+<img width="1602" height="909" alt="Screenshot 2026-04-22 at 13 59 39" src="https://github.com/user-attachments/assets/0b41a7db-d0c0-4c37-a3bd-cb3639bb96e0" />
+<img width="1488" height="428" alt="Screenshot 2026-04-22 at 13 59 47" src="https://github.com/user-attachments/assets/0bc4b081-84f4-4cc2-8baf-9158ccdb34e9" />
+
+
